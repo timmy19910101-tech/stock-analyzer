@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Signal Analyzer — HK & US Markets</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f1117;color:#e0e0e0;min-height:100vh}
+.header{background:linear-gradient(135deg,#1a1d29,#252836);padding:16px 20px;border-bottom:1px solid #333;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.header h1{font-size:18px;font-weight:700;color:#fff;white-space:nowrap}
+.header h1 span{color:#6c9bff}
+.search-box{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.search-box input{background:#15171f;border:1px solid #333;border-radius:8px;padding:8px 14px;font-size:14px;color:#e0e0e0;outline:none;width:200px;transition:border-color 0.2s,box-shadow 0.2s}
+.search-box input:focus{border-color:#6c9bff;box-shadow:0 0 0 3px rgba(108,155,255,0.15)}
+.search-box input::placeholder{color:#555}
+.search-box select{background:#15171f;border:1px solid #333;border-radius:8px;padding:8px 12px;font-size:14px;color:#e0e0e0;outline:none;cursor:pointer;transition:border-color 0.2s}
+.search-box select:hover{border-color:#444}
+.search-box button{background:#6c9bff;border:none;border-radius:8px;padding:8px 16px;font-size:14px;color:#fff;cursor:pointer;font-weight:600;transition:all 0.2s;position:relative;min-width:80px}
+.search-box button:hover:not(:disabled){background:#5a8aee;transform:translateY(-1px)}
+.search-box button:active:not(:disabled){transform:translateY(0)}
+.search-box button:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+.scan-btn{background:#4ade80!important;color:#000!important}
+.scan-btn:hover:not(:disabled){background:#3cc96e!important}
+.autocomplete{position:relative}
+.autocomplete-list{position:absolute;top:100%;left:0;right:0;background:#1a1d29;border:1px solid #333;border-radius:8px;margin-top:4px;max-height:200px;overflow-y:auto;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,0.4);display:none}
+.autocomplete-list.show{display:block}
+.autocomplete-item{padding:10px 14px;cursor:pointer;font-size:13px;transition:background 0.15s;display:flex;justify-content:space-between;align-items:center}
+.autocomplete-item:hover,.autocomplete-item.active{background:#252836}
+.autocomplete-item .sym{font-weight:600;color:#fff}
+.autocomplete-item .name{color:#666;font-size:11px;margin-left:8px}
+.container{max-width:1400px;margin:0 auto;padding:16px 20px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+@media(max-width:600px){
+  .header{padding:12px 16px}
+  .header h1{font-size:16px}
+  .search-box input{width:140px}
+  .search-box button{padding:8px 12px;font-size:13px}
+}
+.card{background:#1a1d29;border:1px solid #2a2d3a;border-radius:12px;padding:20px;overflow:hidden;animation:fadeIn 0.3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.card-title{font-size:16px;font-weight:600;color:#fff;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.badge-buy{background:#1a3a2a;color:#4ade80;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700}
+.badge-sell{background:#3a1a1a;color:#f87171;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700}
+.badge-neutral{background:#2a2a1a;color:#fbbf24;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700}
+.badge-strong-buy{background:#0f3a1a;color:#22c55e;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700}
+.badge-strong-sell{background:#3a0f0f;color:#ef4444;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700}
+.signal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.signal-item{background:#15171f;border-radius:8px;padding:10px 12px;text-align:center}
+.signal-item .name{font-size:11px;color:#888;margin-bottom:4px}
+.signal-item .val{font-size:15px;font-weight:700;color:#fff}
+.signal-item .sig{font-size:11px;margin-top:4px;font-weight:600}
+.sig-buy{color:#4ade80}.sig-sell{color:#f87171}.sig-neutral{color:#fbbf24}
+.overview{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:16px}
+.ov-item{background:#15171f;border-radius:8px;padding:10px 14px}
+.ov-item .label{font-size:11px;color:#666}.ov-item .val{font-size:16px;font-weight:700;color:#fff;margin-top:2px}
+.ov-item .change{font-size:12px;margin-top:2px}
+.up{color:#4ade80}.down{color:#f87171}
+.full-width{grid-column:1/-1}
+canvas{width:100%!important;height:280px!important}
+.scan-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.scan-sort{display:flex;gap:4px;flex-wrap:wrap}
+.scan-sort-btn{padding:4px 10px;font-size:11px;background:#15171f;border:1px solid #333;border-radius:4px;color:#888;cursor:pointer;transition:all 0.15s}
+.scan-sort-btn:hover{color:#ccc;border-color:#444}
+.scan-sort-btn.active{background:#252836;color:#6c9bff;border-color:#6c9bff}
+.scan-filter{display:flex;gap:8px;align-items:center}
+.scan-filter select{background:#15171f;border:1px solid #333;border-radius:6px;padding:5px 10px;font-size:12px;color:#e0e0e0;cursor:pointer}
+.scan-results{max-height:500px;overflow-y:auto}
+.scan-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:8px;padding:10px 12px;border-bottom:1px solid #1f222e;font-size:13px;align-items:center;transition:background 0.15s;cursor:pointer}
+.scan-row:hover{background:#1f222e}
+.scan-row:active{background:#252836}
+.scan-row.header{color:#666;font-weight:600;font-size:12px;border-bottom:1px solid #333;cursor:default}
+.scan-row.header:hover{background:transparent}
+.loading{text-align:center;padding:40px;color:#555;display:flex;align-items:center;justify-content:center;gap:10px;flex-direction:column}
+.spinner{width:32px;height:32px;border:3px solid #252836;border-top-color:#6c9bff;border-radius:50%;animation:spin 0.8s linear infinite}
+.spinner.small{width:16px;height:16px;border-width:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:40px;color:#555}
+.empty-state-icon{font-size:48px;margin-bottom:12px;opacity:0.5}
+.empty-state-text{font-size:14px;color:#666}
+.tabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap}
+.tab{padding:6px 14px;border-radius:6px;font-size:12px;color:#888;cursor:pointer;background:transparent;border:1px solid transparent;transition:all 0.2s}
+.tab:hover{color:#ccc}.tab.active{background:#252836;color:#6c9bff;border-color:#333}
+.error{background:#3a1a1a;color:#f87171;padding:12px 16px;border-radius:8px;margin-bottom:12px;font-size:13px}
+.gauge{width:120px;height:120px;margin:0 auto 8px;position:relative}
+.gauge-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.gauge-text .big{font-size:28px;font-weight:800}
+.gauge-text .small{font-size:11px;color:#888}
+.back-btn{background:#252836;border:1px solid #333;border-radius:8px;padding:6px 14px;font-size:13px;color:#6c9bff;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;margin-bottom:12px}
+.back-btn:hover{background:#2a2f42;border-color:#6c9bff}
+.legend{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.legend-item{font-size:11px;color:#888;display:flex;align-items:center;gap:4px}
+.legend-dot{width:8px;height:8px;border-radius:50%}
+.back-btn{background:#252836;border:1px solid #333;border-radius:8px;padding:6px 14px;font-size:13px;color:#6c9bff;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;margin-bottom:12px}
+.back-btn:hover{background:#2a2f42;border-color:#6c9bff}
+.reasons{background:#15171f;border-radius:8px;padding:16px;margin-top:16px;border-left:3px solid #6c9bff}
+.reasons h3{font-size:14px;color:#fff;margin-bottom:8px}
+.reasons li{font-size:13px;color:#aaa;line-height:1.7;margin-bottom:4px}
+.company-desc{font-size:13px;color:#888;line-height:1.6;margin-top:4px;padding:8px 0;border-bottom:1px solid #2a2d3a}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 Stock <span>Signal Analyzer</span></h1>
+  <div class="search-box">
+    <select id="market" onchange="updateAutocomplete()">
+      <option value="US">🇺🇸 US Market</option>
+      <option value="HK">🇭🇰 HK Market</option>
+    </select>
+    <div class="autocomplete">
+      <input type="text" id="symbol" placeholder="Search symbol (e.g. AAPL, 0700.HK)" autocomplete="off">
+      <div class="autocomplete-list" id="autocompleteList"></div>
+    </div>
+    <button id="analyzeBtn" onclick="analyzeStock()">Analyze</button>
+    <button id="scanBtn" class="scan-btn" onclick="scanMarket()">🔍 Scan</button>
+    <button id="myStocksBtn" onclick="showMyStocks()">⭐ My Stocks</button>
+  </div>
+</div>
+
+<div class="container">
+  <div id="mainContent">
+    <div class="card">
+      <div class="card-title">Welcome</div>
+      <p style="color:#888;font-size:14px;line-height:1.8">
+        Search any US or HK stock symbol to get a comprehensive technical analysis with buy/sell signals.<br><br>
+        <strong style="color:#ccc">Features:</strong><br>
+        • <strong>15 Technical Indicators</strong> — SMA, EMA, RSI, MACD, Bollinger Bands, Stochastic, ADX, OBV, Parabolic SAR, Ichimoku, Williams %R, CCI, ATR, VWAP, Money Flow Index<br>
+        • <strong>CFA-Aligned Signals</strong> — Moving average crossovers, momentum divergence, mean reversion, volume confirmation, trend strength<br>
+        • <strong>Composite Score</strong> — Weighted signal aggregation with Buy/Sell/Neutral rating<br>
+        • <strong>Market Scanner</strong> — Scan popular stocks for strongest buy/sell signals<br><br>
+        <strong style="color:#ccc">Try:</strong> AAPL, MSFT, GOOGL, TSLA, NVDA, AMZN (US) | 0700.HK, 9988.HK, 1299.HK, 0005.HK, 0388.HK (HK)
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== CONFIG =====
+const WORKER_URL = 'https://stock-api-proxy.timmy19910101.workers.dev';
+const PROXY = WORKER_URL + '/api/chart/';
+const PROXY2 = WORKER_URL + '/api/quote/';
+const SEARCH = WORKER_URL + '/api/search/';
+const INDICATORS = [
+  {name:'SMA 20/50',weight:2},{name:'SMA 50/200',weight:2},{name:'EMA 12/26',weight:2},
+  {name:'RSI (14)',weight:2},{name:'MACD',weight:2},{name:'Bollinger Bands',weight:2},
+  {name:'Stochastic %K/%D',weight:1.5},{name:'ADX',weight:1},{name:'OBV',weight:1},
+  {name:'Parabolic SAR',weight:1},{name:'Williams %R',weight:1},{name:'CCI',weight:1},
+  {name:'ATR',weight:0.5},{name:'VWAP',weight:1},{name:'MFI',weight:1.5}
+];
+
+const HK_WATCHLIST = ['0700.HK','9988.HK','1299.HK','0005.HK','0388.HK','0001.HK','0002.HK','0003.HK','0016.HK','0011.HK','0012.HK','0017.HK','0027.HK','0066.HK','0101.HK','0175.HK','0241.HK','0267.HK','0288.HK','0386.HK','0669.HK','0688.HK','0762.HK','0823.HK','0883.HK','0939.HK','0941.HK','0960.HK','0968.HK','1038.HK','1044.HK','1088.HK','1109.HK','1113.HK','1177.HK','1211.HK','1288.HK','1299.HK','1398.HK','1810.HK','1876.HK','1928.HK','1997.HK','2007.HK','2018.HK','2020.HK','2269.HK','2313.HK','2318.HK','2382.HK','2388.HK','2628.HK','2688.HK','2899.HK'];
+const US_WATCHLIST = ['AAPL','MSFT','GOOGL','AMZN','NVDA','META','TSLA','BRK-B','JPM','V','JNJ','WMT','PG','MA','HD','UNH','DIS','PYPL','INTC','NFLX','AMD','CRM','COST','TMO','ABT','MRK','PFE','T','VZ','KO','PEP'];
+
+// ===== MY STOCKS (localStorage) =====
+const MY_STOCKS_KEY = 'stockAnalyzer_myStocks';
+function getMyStocks() {
+  try {
+    const saved = localStorage.getItem(MY_STOCKS_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch { return []; }
+}
+function saveMyStocks(stocks) {
+  try { localStorage.setItem(MY_STOCKS_KEY, JSON.stringify(stocks)); } catch {}
+}
+function addToMyStocks(symbol) {
+  const stocks = getMyStocks();
+  if (!stocks.includes(symbol)) {
+    stocks.unshift(symbol);
+    saveMyStocks(stocks);
+  }
+}
+function removeFromMyStocks(symbol) {
+  const stocks = getMyStocks().filter(s => s !== symbol);
+  saveMyStocks(stocks);
+}
+function isInMyStocks(symbol) {
+  return getMyStocks().includes(symbol);
+}
+
+// ===== DATA FETCHING =====
+async function fetchChartData(symbol, range='1y', interval='1d') {
+  const url = `${PROXY}${encodeURIComponent(symbol)}?range=${range}&interval=${interval}&includePrePost=false`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`Failed to fetch ${symbol} (HTTP ${r.status})`);
+  const d = await r.json();
+  if (!d.chart || !d.chart.result || !d.chart.result[0]) {
+    throw new Error(`No data available for ${symbol}`);
+  }
+  const result = d.chart.result[0];
+  if (!result.timestamp || !result.indicators?.quote?.[0]) {
+    throw new Error(`Incomplete data for ${symbol}`);
+  }
+  const ts = result.timestamp;
+  const q = result.indicators.quote[0];
+  const adj = result.indicators.adjclose ? result.indicators.adjclose[0].adjclose : null;
+  const data = [];
+  for (let i = 0; i < ts.length; i++) {
+    if (q.close[i] === null) continue;
+    data.push({
+      date: new Date(ts[i]*1000),
+      open: q.open[i], high: q.high[i], low: q.low[i],
+      close: q.close[i], volume: q.volume[i],
+      adjClose: adj ? adj[i] : q.close[i]
+    });
+  }
+  if (data.length === 0) throw new Error(`No valid price data for ${symbol}`);
+  return { data, meta: result.meta };
+}
+
+async function fetchQuote(symbol) {
+  try {
+    const r = await fetch(`${PROXY2}${encodeURIComponent(symbol)}?modules=price,summaryDetail,defaultKeyStatistics,assetProfile`);
+    const d = await r.json();
+    if (d.finance && d.finance.error) throw new Error('Quote auth failed');
+    const q = d[symbol];
+    if (!q || !q.price) throw new Error('No quote data');
+    return {
+      price: q.price.regularMarketPrice,
+      change: q.price.regularMarketChangePercent,
+      prevClose: q.price.regularMarketPreviousClose,
+      name: q.price.shortName || q.price.longName || symbol,
+      fullName: q.price.longName || q.price.shortName || symbol,
+      exchange: q.price.exchangeName || '',
+      currency: q.price.currencySymbol || '',
+      marketCap: q.summaryDetail ? q.summaryDetail.marketCap : null,
+      pe: q.summaryDetail ? q.summaryDetail.trailingPE : null,
+      pb: q.summaryDetail ? q.summaryDetail.priceToBook : null,
+      high52: q.summaryDetail ? q.summaryDetail.fiftyTwoWeekHigh : null,
+      low52: q.summaryDetail ? q.summaryDetail.fiftyTwoWeekLow : null,
+      volume: q.price ? q.price.regularMarketVolume : null,
+      dividendYield: q.summaryDetail ? q.summaryDetail.dividendYield : null,
+      beta: q.defaultKeyStatistics ? q.defaultKeyStatistics.beta : null,
+      sector: q.assetProfile ? q.assetProfile.sector : '',
+      industry: q.assetProfile ? q.assetProfile.industry : '',
+      description: q.assetProfile && q.assetProfile.longBusinessSummary ? q.assetProfile.longBusinessSummary.substring(0, 300) : '',
+    };
+  } catch {
+    // Fallback: use chart meta for basic price info
+    try {
+      const r = await fetch(`${PROXY}${encodeURIComponent(symbol)}?range=5d&interval=1d`);
+      const d = await r.json();
+      const meta = d.chart.result[0].meta;
+      return {
+        price: meta.regularMarketPrice,
+        change: meta.chartPreviousClose ? ((meta.regularMarketPrice - meta.chartPreviousClose) / meta.chartPreviousClose) * 100 : 0,
+        prevClose: meta.chartPreviousClose,
+        name: meta.symbol,
+        fullName: meta.symbol,
+        exchange: '', currency: '',
+        marketCap: null, pe: null, pb: null, volume: null,
+        high52: meta.fiftyTwoWeekHigh, low52: meta.fiftyTwoWeekLow,
+        dividendYield: null, beta: null, sector: '', industry: '', description: ''
+      };
+    } catch { return null; }
+  }
+}
+
+// ===== TECHNICAL INDICATORS =====
+function sma(data, period) {
+  const r = [];
+  for (let i = 0; i < data.length; i++) {
+    if (i < period - 1) { r.push(null); continue; }
+    let sum = 0;
+    for (let j = i - period + 1; j <= i; j++) sum += data[j].close;
+    r.push(sum / period);
+  }
+  return r;
+}
+
+function ema(data, period) {
+  const r = [];
+  const k = 2 / (period + 1);
+  let prev = null;
+  for (let i = 0; i < data.length; i++) {
+    if (i < period - 1) { r.push(null); continue; }
+    if (prev === null) {
+      let sum = 0;
+      for (let j = i - period + 1; j <= i; j++) sum += data[j].close;
+      prev = sum / period;
+    } else {
+      prev = data[i].close * k + prev * (1 - k);
+    }
+    r.push(prev);
+  }
+  return r;
+}
+
+function rsi(data, period = 14) {
+  const r = [];
+  let avgGain = 0, avgLoss = 0;
+  for (let i = 0; i < data.length; i++) {
+    if (i === 0) { r.push(null); continue; }
+    const change = data[i].close - data[i-1].close;
+    if (i <= period) {
+      avgGain += Math.max(change, 0);
+      avgLoss += Math.max(-change, 0);
+      if (i === period) {
+        avgGain /= period;
+        avgLoss /= period;
+        const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+        r.push(100 - 100 / (1 + rs));
+      } else { r.push(null); }
+    } else {
+      avgGain = (avgGain * (period - 1) + Math.max(change, 0)) / period;
+      avgLoss = (avgLoss * (period - 1) + Math.max(-change, 0)) / period;
+      const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+      r.push(100 - 100 / (1 + rs));
+    }
+  }
+  return r;
+}
+
+function macd(data) {
+  const ema12 = ema(data, 12);
+  const ema26 = ema(data, 26);
+  const macdLine = [], signal = [], histogram = [];
+  for (let i = 0; i < data.length; i++) {
+    if (ema12[i] === null || ema26[i] === null) { macdLine.push(null); signal.push(null); histogram.push(null); continue; }
+    macdLine.push(ema12[i] - ema26[i]);
+  }
+  // Signal line = 9-period EMA of MACD
+  const k = 2/10;
+  let prevSig = null;
+  for (let i = 0; i < macdLine.length; i++) {
+    if (macdLine[i] === null) { continue; }
+    if (prevSig === null) {
+      let sum = 0, count = 0;
+      for (let j = i; j >= 0 && count < 9; j--) {
+        if (macdLine[j] !== null) { sum += macdLine[j]; count++; }
+      }
+      prevSig = sum / count;
+    } else {
+      prevSig = macdLine[i] * k + prevSig * (1 - k);
+    }
+    signal[i] = prevSig;
+    histogram[i] = macdLine[i] - prevSig;
+  }
+  return { macdLine, signal, histogram };
+}
+
+function bollingerBands(data, period = 20, mult = 2) {
+  const smaVals = sma(data, period);
+  const upper = [], lower = [], bandwidth = [], pctB = [];
+  for (let i = 0; i < data.length; i++) {
+    if (smaVals[i] === null) { upper.push(null); lower.push(null); bandwidth.push(null); pctB.push(null); continue; }
+    let sumSq = 0;
+    for (let j = i - period + 1; j <= i; j++) sumSq += Math.pow(data[j].close - smaVals[i], 2);
+    const std = Math.sqrt(sumSq / period);
+    upper.push(smaVals[i] + mult * std);
+    lower.push(smaVals[i] - mult * std);
+    bandwidth.push(upper[i] - lower[i]);
+    pctB.push(std === 0 ? 0.5 : (data[i].close - lower[i]) / (upper[i] - lower[i]));
+  }
+  return { upper, middle: smaVals, lower, bandwidth, pctB };
+}
+
+function stochastic(data, kPeriod = 14, dPeriod = 3) {
+  const kVals = [], dVals = [];
+  for (let i = 0; i < data.length; i++) {
+    if (i < kPeriod - 1) { kVals.push(null); continue; }
+    let high = -Infinity, low = Infinity;
+    for (let j = i - kPeriod + 1; j <= i; j++) {
+      high = Math.max(high, data[j].high);
+      low = Math.min(low, data[j].low);
+    }
+    kVals.push(high === low ? 50 : ((data[i].close - low) / (high - low)) * 100);
+  }
+  for (let i = 0; i < kVals.length; i++) {
+    if (kVals[i] === null || i < kPeriod - 1 + dPeriod - 1) { dVals.push(null); continue; }
+    let sum = 0, count = 0;
+    for (let j = i - dPeriod + 1; j <= i; j++) {
+      if (kVals[j] !== null) { sum += kVals[j]; count++; }
+    }
+    dVals.push(sum / count);
+  }
+  return { k: kVals, d: dVals };
+}
+
+function adx(data, period = 14) {
+  const trs = [], plusDMs = [], minusDMs = [];
+  for (let i = 0; i < data.length; i++) {
+    if (i === 0) { trs.push(null); plusDMs.push(null); minusDMs.push(null); continue; }
+    const tr = Math.max(data[i].high - data[i].low, Math.abs(data[i].high - data[i-1].close), Math.abs(data[i].low - data[i-1].close));
+    const upMove = data[i].high - data[i-1].high;
+    const downMove = data[i-1].low - data[i].low;
+    plusDMs.push(upMove > downMove && upMove > 0 ? upMove : 0);
+    minusDMs.push(downMove > upMove && downMove > 0 ? downMove : 0);
+    trs.push(tr);
+  }
+  const smooth = (arr) => {
+    const r = [];
+    for (let i = 0; i < arr.length; i++) {
+      if (i < period) { r.push(null); continue; }
+      if (r[i-1] === null) {
+        let sum = 0;
+        for (let j = i - period + 1; j <= i; j++) sum += arr[j];
+        r.push(sum);
+      } else {
+        r.push(r[i-1] - r[i-1]/period + arr[i]);
+      }
+    }
+    return r;
+  };
+  const sTR = smooth(trs), sPDM = smooth(plusDMs), sMDM = smooth(minusDMs);
+  const dx = [], adxVals = [];
+  for (let i = 0; i < data.length; i++) {
+    if (sTR[i] === null || sTR[i] === 0) { dx.push(null); continue; }
+    const pdi = (sPDM[i] / sTR[i]) * 100;
+    const mdi = (sMDM[i] / sTR[i]) * 100;
+    dx.push(pdi + mdi === 0 ? 0 : Math.abs(pdi - mdi) / (pdi + mdi) * 100);
+  }
+  for (let i = 0; i < data.length; i++) {
+    if (i < period * 2 || dx[i] === null) { adxVals.push(null); continue; }
+    if (adxVals[i-1] === null) {
+      let sum = 0;
+      for (let j = i - period + 1; j <= i; j++) sum += dx[j];
+      adxVals.push(sum / period);
+    } else {
+      adxVals.push((adxVals[i-1] * (period - 1) + dx[i]) / period);
+    }
+  }
+  return adxVals;
+}
+
+function obv(data) {
+  const r = [0];
+  for (let i = 1; i < data.length; i++) {
+    r.push(r[i-1] + (data[i].close > data[i-1].close ? data[i].volume : data[i].close < data[i-1].close ? -data[i].volume : 0));
+  }
+  return r;
+}
+
+function parabolicSAR(data, step = 0.02, max = 0.2) {
+  const n = data.length;
+  const sar = [data[0].low];
+  let trend = 1; // 1 = up, -1 = down
+  let ep = data[0].high;
+  let af = step;
+  for (let i = 1; i < n; i++) {
+    const prev = sar[i-1];
+    if (trend === 1) {
+      sar[i] = prev + af * (ep - prev);
+      if (i >= 2) sar[i] = Math.min(sar[i], data[i-1].low, data[i-2].low);
+      if (data[i].low < sar[i]) {
+        trend = -1;
+        sar[i] = ep;
+        ep = data[i].low;
+        af = step;
+      } else if (data[i].high > ep) {
+        ep = data[i].high;
+        af = Math.min(af + step, max);
+      }
+    } else {
+      sar[i] = prev + af * (ep - prev);
+      if (i >= 2) sar[i] = Math.max(sar[i], data[i-1].high, data[i-2].high);
+      if (data[i].high > sar[i]) {
+        trend = 1;
+        sar[i] = ep;
+        ep = data[i].high;
+        af = step;
+      } else if (data[i].low < ep) {
+        ep = data[i].low;
+        af = Math.min(af + step, max);
+      }
+    }
+  }
+  return sar;
+}
+
+function williamsR(data, period = 14) {
+  const r = [];
+  for (let i = 0; i < data.length; i++) {
+    if (i < period - 1) { r.push(null); continue; }
+    let high = -Infinity, low = Infinity;
+    for (let j = i - period + 1; j <= i; j++) {
+      high = Math.max(high, data[j].high);
+      low = Math.min(low, data[j].low);
+    }
+    r.push(high === low ? -50 : ((high - data[i].close) / (high - low)) * -100);
+  }
+  return r;
+}
+
+function cci(data, period = 20) {
+  const tp = data.map((d, i) => (d.high + d.low + d.close) / 3);
+  const tpData = data.map((d, i) => ({...d, close: tp[i]}));
+  const smaVals = sma(tpData, period);
+  const r = [];
+  for (let i = 0; i < data.length; i++) {
+    if (smaVals[i] === null) { r.push(null); continue; }
+    let sum = 0;
+    for (let j = i - period + 1; j <= i; j++) sum += Math.abs(tp[j] - smaVals[i]);
+    const mad = sum / period;
+    r.push(mad === 0 ? 0 : (tp[i] - smaVals[i]) / (0.015 * mad));
+  }
+  return r;
+}
+
+function atr(data, period = 14) {
+  const r = [];
+  for (let i = 0; i < data.length; i++) {
+    if (i === 0) { r.push(null); continue; }
+    const tr = Math.max(data[i].high - data[i].low, Math.abs(data[i].high - data[i-1].close), Math.abs(data[i].low - data[i-1].close));
+    if (i < period) { r.push(null); continue; }
+    if (r[i-1] === null) {
+      let sum = 0;
+      for (let j = 1; j <= period; j++) {
+        const t = Math.max(data[j].high - data[j].low, Math.abs(data[j].high - data[j-1].close), Math.abs(data[j].low - data[j-1].close));
+        sum += t;
+      }
+      r.push(sum / period);
+    } else {
+      r.push((r[i-1] * (period - 1) + tr) / period);
+    }
+  }
+  return r;
+}
+
+function mfi(data, period = 14) {
+  const r = [];
+  for (let i = 0; i < data.length; i++) {
+    if (i === 0) { r.push(null); continue; }
+    const tp = (data[i].high + data[i].low + data[i].close) / 3;
+    const mf = tp * data[i].volume;
+    let posMF = 0, negMF = 0;
+    for (let j = Math.max(1, i - period + 1); j <= i; j++) {
+      const prevTP = (data[j-1].high + data[j-1].low + data[j-1].close) / 3;
+      const tpj = (data[j].high + data[j].low + data[j].close) / 3;
+      const mfv = tpj * data[j].volume;
+      if (tpj > prevTP) posMF += mfv; else negMF += mfv;
+    }
+    r.push(negMF === 0 ? 100 : 100 - 100 / (1 + posMF / negMF));
+  }
+  return r;
+}
+
+function vwap(data) {
+  const r = [];
+  let cumTPV = 0, cumVol = 0;
+  for (let i = 0; i < data.length; i++) {
+    const tp = (data[i].high + data[i].low + data[i].close) / 3;
+    cumTPV += tp * data[i].volume;
+    cumVol += data[i].volume;
+    r.push(cumVol === 0 ? data[i].close : cumTPV / cumVol);
+  }
+  return r;
+}
+
+// ===== SIGNAL GENERATION =====
+function analyzeIndicator(name, data) {
+  const n = data.length - 1;
+  const c = data[n].close;
+  const p = n - 1;
+  const result = { name, value: null, signal: 'neutral', detail: '' };
+
+  switch(name) {
+    case 'SMA 20/50': {
+      const s20 = sma(data, 20), s50 = sma(data, 50);
+      if (s20[n] !== null && s50[n] !== null) {
+        const cross = s20[n] > s50[n] && s20[p] <= s50[p];
+        const crossDown = s20[n] < s50[n] && s20[p] >= s50[p];
+        result.value = `${c.toFixed(2)}`;
+        if (cross) { result.signal = 'buy'; result.detail = 'Golden cross (SMA20 > SMA50)'; }
+        else if (crossDown) { result.signal = 'sell'; result.detail = 'Death cross (SMA20 < SMA50)'; }
+        else if (s20[n] > s50[n]) { result.signal = 'buy'; result.detail = 'Bullish: SMA20 above SMA50'; }
+        else { result.signal = 'sell'; result.detail = 'Bearish: SMA20 below SMA50'; }
+      }
+      break;
+    }
+    case 'SMA 50/200': {
+      const s50 = sma(data, 50), s200 = sma(data, 200);
+      if (s50[n] !== null && s200[n] !== null) {
+        const cross = s50[n] > s200[n] && s50[p] <= s200[p];
+        const crossDown = s50[n] < s200[n] && s50[p] >= s200[p];
+        result.value = `${c.toFixed(2)}`;
+        if (cross) { result.signal = 'buy'; result.detail = 'Golden cross (SMA50 > SMA200)'; }
+        else if (crossDown) { result.signal = 'sell'; result.detail = 'Death cross (SMA50 < SMA200)'; }
+        else if (s50[n] > s200[n]) { result.signal = 'buy'; result.detail = 'Bullish: SMA50 above SMA200'; }
+        else { result.signal = 'sell'; result.detail = 'Bearish: SMA50 below SMA200'; }
+      }
+      break;
+    }
+    case 'EMA 12/26': {
+      const e12 = ema(data, 12), e26 = ema(data, 26);
+      if (e12[n] !== null && e26[n] !== null) {
+        const cross = e12[n] > e26[n] && e12[p] <= e26[p];
+        const crossDown = e12[n] < e26[n] && e12[p] >= e26[p];
+        result.value = `${(e12[n]-e26[n]).toFixed(4)}`;
+        if (cross) { result.signal = 'buy'; result.detail = 'EMA12 crossed above EMA26'; }
+        else if (crossDown) { result.signal = 'sell'; result.detail = 'EMA12 crossed below EMA26'; }
+        else if (e12[n] > e26[n]) { result.signal = 'buy'; result.detail = 'Bullish: EMA12 > EMA26'; }
+        else { result.signal = 'sell'; result.detail = 'Bearish: EMA12 < EMA26'; }
+      }
+      break;
+    }
+    case 'RSI (14)': {
+      const rsiVals = rsi(data, 14);
+      if (rsiVals[n] !== null) {
+        const v = rsiVals[n];
+        result.value = v.toFixed(1);
+        if (v < 30) { result.signal = 'buy'; result.detail = 'Oversold (<30) — potential reversal up'; }
+        else if (v < 40) { result.signal = 'buy'; result.detail = 'Approaching oversold zone'; }
+        else if (v > 70) { result.signal = 'sell'; result.detail = 'Overbought (>70) — potential reversal down'; }
+        else if (v > 60) { result.signal = 'sell'; result.detail = 'Approaching overbought zone'; }
+        else { result.signal = 'neutral'; result.detail = 'Neutral zone'; }
+      }
+      break;
+    }
+    case 'MACD': {
+      const m = macd(data);
+      if (m.macdLine[n] !== null && m.signal[n] !== null) {
+        const cross = m.macdLine[n] > m.signal[n] && m.macdLine[p] <= m.signal[p];
+        const crossDown = m.macdLine[n] < m.signal[n] && m.macdLine[p] >= m.signal[p];
+        const hist = m.histogram[n];
+        result.value = m.histogram[n].toFixed(4);
+        if (cross) { result.signal = 'buy'; result.detail = 'MACD crossed above signal line'; }
+        else if (crossDown) { result.signal = 'sell'; result.detail = 'MACD crossed below signal line'; }
+        else if (hist > 0 && hist > (m.histogram[p]||0)) { result.signal = 'buy'; result.detail = 'Positive and increasing histogram'; }
+        else if (hist < 0 && hist < (m.histogram[p]||0)) { result.signal = 'sell'; result.detail = 'Negative and decreasing histogram'; }
+        else if (hist > 0) { result.signal = 'buy'; result.detail = 'Positive momentum'; }
+        else { result.signal = 'sell'; result.detail = 'Negative momentum'; }
+      }
+      break;
+    }
+    case 'Bollinger Bands': {
+      const bb = bollingerBands(data);
+      if (bb.upper[n] !== null) {
+        const pct = bb.pctB[n];
+        result.value = pct.toFixed(3);
+        if (pct < 0) { result.signal = 'buy'; result.detail = 'Price below lower band — oversold'; }
+        else if (pct < 0.2) { result.signal = 'buy'; result.detail = 'Near lower band — approaching oversold'; }
+        else if (pct > 1) { result.signal = 'sell'; result.detail = 'Price above upper band — overbought'; }
+        else if (pct > 0.8) { result.signal = 'sell'; result.detail = 'Near upper band — approaching overbought'; }
+        else { result.signal = 'neutral'; result.detail = 'Within bands — normal range'; }
+      }
+      break;
+    }
+    case 'Stochastic %K/%D': {
+      const st = stochastic(data);
+      if (st.k[n] !== null && st.d[n] !== null) {
+        result.value = `${st.k[n].toFixed(1)}/${st.d[n].toFixed(1)}`;
+        const cross = st.k[n] > st.d[n] && st.k[p] <= st.d[p];
+        const crossDown = st.k[n] < st.d[n] && st.k[p] >= st.d[p];
+        if (cross && st.k[n] < 30) { result.signal = 'buy'; result.detail = '%K crossed above %D in oversold zone'; }
+        else if (crossDown && st.k[n] > 70) { result.signal = 'sell'; result.detail = '%K crossed below %D in overbought zone'; }
+        else if (cross) { result.signal = 'buy'; result.detail = '%K crossed above %D'; }
+        else if (crossDown) { result.signal = 'sell'; result.detail = '%K crossed below %D'; }
+        else if (st.k[n] < 20) { result.signal = 'buy'; result.detail = 'Oversold (%K < 20)'; }
+        else if (st.k[n] > 80) { result.signal = 'sell'; result.detail = 'Overbought (%K > 80)'; }
+        else { result.signal = 'neutral'; result.detail = 'Neutral zone'; }
+      }
+      break;
+    }
+    case 'ADX': {
+      const adxVals = adx(data);
+      if (adxVals[n] !== null) {
+        result.value = adxVals[n].toFixed(1);
+        if (adxVals[n] > 50) { result.signal = adxVals[n] > adxVals[p] ? 'buy' : 'sell'; result.detail = `Strong trend (${adxVals[n].toFixed(1)})`; }
+        else if (adxVals[n] > 25) { result.signal = 'neutral'; result.detail = `Trending (${adxVals[n].toFixed(1)})`; }
+        else { result.signal = 'neutral'; result.detail = `Weak/no trend (${adxVals[n].toFixed(1)})`; }
+      }
+      break;
+    }
+    case 'OBV': {
+      const obvVals = obv(data);
+      if (obvVals.length >= 20) {
+        const obvSma = obvVals.slice(-20).reduce((a,b) => a+b, 0) / 20;
+        result.value = obvVals[n].toFixed(0);
+        if (obvVals[n] > obvSma && obvVals[n] > obvVals[n-1]) { result.signal = 'buy'; result.detail = 'OBV rising — accumulation'; }
+        else if (obvVals[n] < obvSma && obvVals[n] < obvVals[n-1]) { result.signal = 'sell'; result.detail = 'OBV falling — distribution'; }
+        else { result.signal = 'neutral'; result.detail = 'OBV neutral'; }
+      }
+      break;
+    }
+    case 'Parabolic SAR': {
+      const sar = parabolicSAR(data);
+      result.value = sar[n].toFixed(2);
+      if (sar[n] < c) { result.signal = 'buy'; result.detail = `SAR below price (${sar[n].toFixed(2)}) — bullish`; }
+      else { result.signal = 'sell'; result.detail = `SAR above price (${sar[n].toFixed(2)}) — bearish`; }
+      break;
+    }
+    case 'Williams %R': {
+      const wr = williamsR(data);
+      if (wr[n] !== null) {
+        result.value = wr[n].toFixed(1);
+        if (wr[n] < -80) { result.signal = 'buy'; result.detail = 'Oversold (%R < -80)'; }
+        else if (wr[n] > -20) { result.signal = 'sell'; result.detail = 'Overbought (%R > -20)'; }
+        else { result.signal = 'neutral'; result.detail = 'Neutral zone'; }
+      }
+      break;
+    }
+    case 'CCI': {
+      const cciVals = cci(data);
+      if (cciVals[n] !== null) {
+        result.value = cciVals[n].toFixed(1);
+        if (cciVals[n] < -100) { result.signal = 'buy'; result.detail = 'Oversold (CCI < -100)'; }
+        else if (cciVals[n] > 100) { result.signal = 'sell'; result.detail = 'Overbought (CCI > 100)'; }
+        else { result.signal = 'neutral'; result.detail = 'Neutral zone'; }
+      }
+      break;
+    }
+    case 'ATR': {
+      const atrVals = atr(data);
+      if (atrVals[n] !== null) {
+        result.value = atrVals[n].toFixed(4);
+        result.signal = 'neutral';
+        const avg = atrVals.slice(-20).filter(v=>v!==null);
+        const recentAvg = avg.length > 0 ? avg.reduce((a,b)=>a+b,0)/avg.length : atrVals[n];
+        result.detail = `Volatility ${(atrVals[n]/recentAvg*100).toFixed(0)}% of 20d avg`;
+      }
+      break;
+    }
+    case 'VWAP': {
+      const vwapVals = vwap(data);
+      if (vwapVals[n] !== null) {
+        result.value = vwapVals[n].toFixed(2);
+        if (c > vwapVals[n]) { result.signal = 'buy'; result.detail = 'Price above VWAP — bullish'; }
+        else { result.signal = 'sell'; result.detail = 'Price below VWAP — bearish'; }
+      }
+      break;
+    }
+    case 'MFI': {
+      const mfiVals = mfi(data);
+      if (mfiVals[n] !== null) {
+        result.value = mfiVals[n].toFixed(1);
+        if (mfiVals[n] < 20) { result.signal = 'buy'; result.detail = 'Oversold (MFI < 20)'; }
+        else if (mfiVals[n] > 80) { result.signal = 'sell'; result.detail = 'Overbought (MFI > 80)'; }
+        else { result.signal = 'neutral'; result.detail = 'Neutral zone'; }
+      }
+      break;
+    }
+  }
+  return result;
+}
+
+function computeCompositeScore(signals) {
+  let buyScore = 0, sellScore = 0, totalWeight = 0;
+  for (const s of signals) {
+    if (!s || s.signal === 'neutral') continue;
+    const w = INDICATORS.find(i => i.name === s.name)?.weight || 1;
+    totalWeight += w;
+    if (s.signal === 'buy') buyScore += w;
+    else if (s.signal === 'sell') sellScore += w;
+  }
+  const net = totalWeight > 0 ? (buyScore - sellScore) / totalWeight : 0;
+  let rating, ratingClass;
+  if (net > 0.5) { rating = 'Strong Buy'; ratingClass = 'badge-strong-buy'; }
+  else if (net > 0.15) { rating = 'Buy'; ratingClass = 'badge-buy'; }
+  else if (net < -0.5) { rating = 'Strong Sell'; ratingClass = 'badge-strong-sell'; }
+  else if (net < -0.15) { rating = 'Sell'; ratingClass = 'badge-sell'; }
+  else { rating = 'Neutral'; ratingClass = 'badge-neutral'; }
+  const buyCount = signals.filter(s => s && s.signal === 'buy').length;
+  const sellCount = signals.filter(s => s && s.signal === 'sell').length;
+  const neutralCount = signals.filter(s => s && s.signal === 'neutral').length;
+  return { net, rating, ratingClass, buyCount, sellCount, neutralCount, buyScore, sellScore, totalWeight };
+}
+
+// ===== FUNDAMENTAL ANALYSIS (from fundamental-stock-analysis skill) =====
+async function fetchFundamentals(symbol) {
+  try {
+    // Try modules that have financial data
+    const modules = 'financialData,defaultKeyStatistics,earnings,earningsTrend,summaryDetail,incomeStatementHistory,balanceSheetHistory,cashflowStatementHistory';
+    const r = await fetch(`${PROXY2}${encodeURIComponent(symbol)}?modules=${modules}`);
+    const d = await r.json();
+    if (d.finance && d.finance.error) return null;
+    const q = d[symbol];
+    if (!q) return null;
+    return q;
+  } catch { return null; }
+}
+
+function scoreFundamentals(raw) {
+  if (!raw) return null;
+  const fd = raw.financialData || {};
+  const ks = raw.defaultKeyStatistics || {};
+  const sd = raw.summaryDetail || {};
+  const earn = raw.earnings || {};
+  const earnTrend = raw.earningsTrend || {};
+  
+  const score = {
+    total: 0, max: 100,
+    businessQuality: { score: 0, max: 30, details: [] },
+    balanceSheet: { score: 0, max: 25, details: [] },
+    cashFlow: { score: 0, max: 20, details: [] },
+    valuation: { score: 0, max: 20, details: [] },
+    capitalAllocation: { score: 0, max: 5, details: [] },
+    verdict: '', confidence: 'Medium', redFlags: [], strengths: [],
+    quickScreen: { passes: 0, total: 7, checks: [] }
+  };
+
+  // ===== QUICK SCREEN =====
+  const checks = [];
+  // 1. Size
+  const mktCap = sd.marketCap || ks.marketCap;
+  const sizePass = mktCap && mktCap > 500_000_000;
+  checks.push({ name: 'Market Cap > $500M', pass: sizePass, detail: mktCap ? `$${(mktCap/1e9).toFixed(1)}B` : 'N/A' });
+  if (sizePass) score.quickScreen.passes++;
+
+  // 2. Liquidity
+  const currentRatio = fd.currentRatio;
+  const liqPass = currentRatio && currentRatio >= 1.0;
+  checks.push({ name: 'Current Ratio >= 1.0', pass: !!liqPass, detail: currentRatio ? currentRatio.toFixed(2) : 'N/A' });
+  if (liqPass) score.quickScreen.passes++;
+
+  // 3. Debt
+  const debtToEquity = fd.debtToEquity;
+  const debtPass = debtToEquity !== undefined && debtToEquity < 200;
+  checks.push({ name: 'D/E < 200', pass: !!debtPass, detail: debtToEquity !== undefined ? debtToEquity.toFixed(1) : 'N/A' });
+  if (debtPass) score.quickScreen.passes++;
+
+  // 4. Earnings
+  const profitMargins = fd.profitMargins;
+  const earningsPass = profitMargins && profitMargins > 0;
+  checks.push({ name: 'Positive Profit Margin', pass: !!earningsPass, detail: profitMargins ? `${(profitMargins*100).toFixed(1)}%` : 'N/A' });
+  if (earningsPass) score.quickScreen.passes++;
+
+  // 5. ROE
+  const roe = fd.returnOnEquity;
+  const roePass = roe && roe > 0.05;
+  checks.push({ name: 'ROE > 5%', pass: !!roePass, detail: roe ? `${(roe*100).toFixed(1)}%` : 'N/A' });
+  if (roePass) score.quickScreen.passes++;
+
+  // 6. Revenue growth
+  const revGrowth = fd.revenueGrowth;
+  const growthPass = revGrowth && revGrowth > 0;
+  checks.push({ name: 'Positive Revenue Growth', pass: !!growthPass, detail: revGrowth ? `${(revGrowth*100).toFixed(1)}%` : 'N/A' });
+  if (growthPass) score.quickScreen.passes++;
+
+  // 7. Operating margins
+  const opMargins = fd.operatingMargins;
+  const opPass = opMargins && opMargins > 0.05;
+  checks.push({ name: 'Operating Margin > 5%', pass: !!opPass, detail: opMargins ? `${(opMargins*100).toFixed(1)}%` : 'N/A' });
+  if (opPass) score.quickScreen.passes++;
+
+  score.quickScreen.checks = checks;
+
+  // ===== BUSINESS QUALITY (max 30) =====
+  let bq = 0;
+  // Margins (10 pts)
+  if (profitMargins !== undefined) {
+    if (profitMargins > 0.2) { bq += 10; score.strengths.push(`Strong net margin ${(profitMargins*100).toFixed(1)}%`); }
+    else if (profitMargins > 0.1) { bq += 7; }
+    else if (profitMargins > 0.05) { bq += 4; }
+    else if (profitMargins > 0) { bq += 2; }
+    else { score.redFlags.push('Negative profit margins'); }
+    score.businessQuality.details.push(`Net Margin: ${(profitMargins*100).toFixed(1)}%`);
+  }
+  if (opMargins !== undefined) {
+    score.businessQuality.details.push(`Operating Margin: ${(opMargins*100).toFixed(1)}%`);
+  }
+  if (fd.grossMargins !== undefined) {
+    score.businessQuality.details.push(`Gross Margin: ${(fd.grossMargins*100).toFixed(1)}%`);
+  }
+  // ROE (10 pts)
+  if (roe !== undefined) {
+    if (roe > 0.2) { bq += 10; score.strengths.push(`Excellent ROE ${(roe*100).toFixed(1)}%`); }
+    else if (roe > 0.15) { bq += 8; }
+    else if (roe > 0.1) { bq += 6; }
+    else if (roe > 0.05) { bq += 3; }
+    score.businessQuality.details.push(`ROE: ${(roe*100).toFixed(1)}%`);
+  }
+  // ROIC (10 pts)
+  const roic = fd.returnOnAssets; // proxy since Yahoo doesn't always have ROIC
+  if (roic !== undefined) {
+    if (roic > 0.1) { bq += 10; }
+    else if (roic > 0.05) { bq += 7; }
+    else if (roic > 0) { bq += 3; }
+    score.businessQuality.details.push(`ROA (ROIC proxy): ${(roic*100).toFixed(1)}%`);
+  } else {
+    bq += 5; // neutral if unavailable
+  }
+  score.businessQuality.score = Math.min(bq, 30);
+
+  // ===== BALANCE SHEET (max 25) =====
+  let bs = 0;
+  // Liquidity (8 pts)
+  if (currentRatio !== undefined) {
+    if (currentRatio > 2) { bs += 8; }
+    else if (currentRatio > 1.5) { bs += 6; }
+    else if (currentRatio > 1) { bs += 4; }
+    else { bs += 1; score.redFlags.push(`Low current ratio ${currentRatio.toFixed(2)}`); }
+    score.balanceSheet.details.push(`Current Ratio: ${currentRatio.toFixed(2)}`);
+  }
+  // Leverage (10 pts)
+  if (debtToEquity !== undefined) {
+    if (debtToEquity < 50) { bs += 10; }
+    else if (debtToEquity < 100) { bs += 7; }
+    else if (debtToEquity < 150) { bs += 4; }
+    else { bs += 1; score.redFlags.push(`High D/E ratio ${debtToEquity.toFixed(0)}`); }
+    score.balanceSheet.details.push(`D/E Ratio: ${debtToEquity.toFixed(1)}`);
+  }
+  // Interest coverage (7 pts)
+  if (fd.operatingCashflow && fd.totalDebt) {
+    const coverage = fd.operatingCashflow / (fd.totalDebt * 0.05); // rough proxy
+    if (coverage > 10) bs += 7;
+    else if (coverage > 5) bs += 5;
+    else if (coverage > 2) bs += 3;
+    else bs += 1;
+    score.balanceSheet.details.push(`OCF/Debt (coverage proxy): ${coverage.toFixed(1)}x`);
+  }
+  score.balanceSheet.score = Math.min(bs, 25);
+
+  // ===== CASH FLOW (max 20) =====
+  let cf = 0;
+  const ocf = fd.operatingCashflow;
+  const fcf = fd.freeCashflow;
+  if (ocf !== undefined) {
+    if (ocf > 0) { cf += 10; score.strengths.push('Positive operating cash flow'); }
+    else { score.redFlags.push('Negative operating cash flow'); cf += 2; }
+    score.cashFlow.details.push(`Operating CF: $${(ocf/1e9).toFixed(2)}B`);
+  }
+  if (fcf !== undefined) {
+    if (fcf > 0) { cf += 7; score.strengths.push('Positive free cash flow'); }
+    else { cf += 1; }
+    score.cashFlow.details.push(`Free CF: $${(fcf/1e9).toFixed(2)}B`);
+  }
+  // FCF margin
+  const fcfMargin = (fd.revenue && fcf) ? fcf / fd.revenue : null;
+  if (fcfMargin !== null) {
+    if (fcfMargin > 0.15) cf += 3;
+    else if (fcfMargin > 0.05) cf += 2;
+    score.cashFlow.details.push(`FCF Margin: ${(fcfMargin*100).toFixed(1)}%`);
+  }
+  score.cashFlow.score = Math.min(cf, 20);
+
+  // ===== VALUATION (max 20) =====
+  let val = 0;
+  const pe = sd.trailingPE;
+  const fwdPe = sd.forwardPE;
+  const pb = sd.priceToBook;
+  const peg = ks.pegRatio;
+  
+  if (pe !== undefined) {
+    score.valuation.details.push(`P/E (trailing): ${pe.toFixed(1)}`);
+    if (pe < 12) { val += 8; score.strengths.push(`Cheap P/E ${pe.toFixed(1)}`); }
+    else if (pe < 20) { val += 6; }
+    else if (pe < 30) { val += 3; }
+    else { val += 1; score.redFlags.push(`High P/E ${pe.toFixed(1)}`); }
+  }
+  if (pb !== undefined) {
+    score.valuation.details.push(`P/B: ${pb.toFixed(2)}`);
+    if (pb < 1) { val += 4; }
+    else if (pb < 2) { val += 3; }
+    else if (pb < 4) { val += 2; }
+  }
+  if (peg !== undefined) {
+    score.valuation.details.push(`PEG: ${peg.toFixed(2)}`);
+    if (peg > 0 && peg < 1) { val += 5; score.strengths.push(`PEG < 1 (${peg.toFixed(2)})`); }
+    else if (peg > 0 && peg < 1.5) { val += 3; }
+    else if (peg > 0) { val += 1; }
+  }
+  if (fwdPe !== undefined) {
+    score.valuation.details.push(`P/E (forward): ${fwdPe.toFixed(1)}`);
+  }
+  score.valuation.score = Math.min(val, 20);
+
+  // ===== CAPITAL ALLOCATION (max 5) =====
+  let ca = 3; // neutral default
+  const buybackYield = ks.buybackYield;
+  if (buybackYield !== undefined) {
+    if (buybackYield > 0.03) { ca = 5; score.strengths.push(`Active buyback yield ${(buybackYield*100).toFixed(1)}%`); }
+    else if (buybackYield > 0) { ca = 4; }
+  }
+  const payoutRatio = sd.payoutRatio;
+  if (payoutRatio !== undefined) {
+    score.capitalAllocation.details.push(`Payout Ratio: ${(payoutRatio*100).toFixed(1)}%`);
+    if (payoutRatio > 0.9) { ca = Math.max(ca - 2, 1); score.redFlags.push(`Very high payout ratio ${payoutRatio.toFixed(1)}`); }
+  }
+  score.capitalAllocation.score = Math.min(ca, 5);
+
+  // ===== FINAL SCORE =====
+  score.total = score.businessQuality.score + score.balanceSheet.score + score.cashFlow.score + score.valuation.score + score.capitalAllocation.score;
+  
+  // Confidence
+  const availableMetrics = [profitMargins, opMargins, roe, currentRatio, debtToEquity, ocf, pe, pb].filter(v => v !== undefined).length;
+  if (availableMetrics >= 6) score.confidence = 'High';
+  else if (availableMetrics >= 4) score.confidence = 'Medium';
+  else score.confidence = 'Low';
+
+  // Verdict
+  if (score.total >= 85) score.verdict = 'Exceptional';
+  else if (score.total >= 75) score.verdict = 'Strong';
+  else if (score.total >= 65) score.verdict = 'Acceptable';
+  else if (score.total >= 50) score.verdict = 'Weak';
+  else score.verdict = 'Avoid';
+
+  return score;
+}
+
+// ===== UI =====
+let lastScanResults = null;
+let lastScanMarket = null;
+let isLoading = false;
+let autocompleteIndex = -1;
+let autocompleteItems = [];
+let lastAnalysisData = null;
+
+function setLoading(loading) {
+  isLoading = loading;
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const scanBtn = document.getElementById('scanBtn');
+  const myStocksBtn = document.getElementById('myStocksBtn');
+  if (analyzeBtn) analyzeBtn.disabled = loading;
+  if (scanBtn) scanBtn.disabled = loading;
+  if (myStocksBtn) myStocksBtn.disabled = loading;
+}
+
+function toggleMyStocks(symbol) {
+  if (isInMyStocks(symbol)) {
+    removeFromMyStocks(symbol);
+  } else {
+    addToMyStocks(symbol);
+  }
+  // Re-render to update button state
+  if (lastAnalysisData) {
+    renderAnalysis(symbol, lastAnalysisData.data, lastAnalysisData.quote, lastAnalysisData.signals, lastAnalysisData.composite, lastAnalysisData.fundamentals);
+  }
+}
+
+// ===== AUTOCOMPLETE =====
+function updateAutocomplete() {
+  const input = document.getElementById('symbol').value.trim().toUpperCase();
+  const list = document.getElementById('autocompleteList');
+  const market = document.getElementById('market').value;
+  const watchlist = market === 'HK' ? HK_WATCHLIST : US_WATCHLIST;
+
+  if (!input) {
+    list.classList.remove('show');
+    return;
+  }
+
+  const matches = watchlist.filter(s => s.includes(input)).slice(0, 8);
+  autocompleteItems = matches;
+  autocompleteIndex = -1;
+
+  if (matches.length === 0) {
+    list.classList.remove('show');
+    return;
+  }
+
+  list.innerHTML = matches.map((s, i) => `
+    <div class="autocomplete-item${i === autocompleteIndex ? ' active' : ''}" data-index="${i}" onclick="selectAutocomplete('${s}')">
+      <span class="sym">${s}</span>
+      <span class="name">${isInMyStocks(s) ? '⭐' : ''}</span>
+    </div>
+  `).join('');
+  list.classList.add('show');
+}
+
+function selectAutocomplete(symbol) {
+  document.getElementById('symbol').value = symbol;
+  document.getElementById('autocompleteList').classList.remove('show');
+  analyzeStock();
+}
+
+function navigateAutocomplete(e) {
+  const list = document.getElementById('autocompleteList');
+  if (!list.classList.contains('show')) return;
+
+  const items = list.querySelectorAll('.autocomplete-item');
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    autocompleteIndex = Math.min(autocompleteIndex + 1, items.length - 1);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    autocompleteIndex = Math.max(autocompleteIndex - 1, 0);
+  } else if (e.key === 'Enter' && autocompleteIndex >= 0) {
+    e.preventDefault();
+    selectAutocomplete(autocompleteItems[autocompleteIndex]);
+    return;
+  } else if (e.key === 'Escape') {
+    list.classList.remove('show');
+    return;
+  }
+
+  items.forEach((item, i) => {
+    item.classList.toggle('active', i === autocompleteIndex);
+  });
+}
+
+// ===== MY STOCKS DISPLAY =====
+async function showMyStocks() {
+  const myStocks = getMyStocks();
+  const main = document.getElementById('mainContent');
+
+  if (myStocks.length === 0) {
+    main.innerHTML = `
+      <div class="card">
+        <div class="card-title">⭐ My Stocks</div>
+        <div class="empty-state">
+          <div class="empty-state-icon">⭐</div>
+          <div class="empty-state-text">No saved stocks yet.<br>Click the ⭐ button when viewing a stock to add it here.</div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  main.innerHTML = `
+    <div class="card">
+      <div class="card-title">⭐ My Stocks <span style="font-size:12px;color:#888;font-weight:400">(${myStocks.length} saved)</span></div>
+      <div id="myStocksContent"><div class="loading"><div class="spinner"></div><span>Loading your stocks...</span></div></div>
+    </div>
+  `;
+
+  const results = [];
+  for (const sym of myStocks) {
+    try {
+      const [chartData, quote] = await Promise.all([
+        fetchChartData(sym, '1y', '1d'),
+        fetchQuote(sym).catch(() => null)
+      ]);
+      if (chartData.data.length < 50) continue;
+      const signals = INDICATORS.map(ind => analyzeIndicator(ind.name, chartData.data));
+      const composite = computeCompositeScore(signals);
+      const c = chartData.data[chartData.data.length-1].close;
+      results.push({
+        symbol: sym,
+        name: quote?.name || sym,
+        price: c,
+        change: quote?.change || 0,
+        rating: composite.rating,
+        ratingClass: composite.ratingClass,
+        net: composite.net,
+        buyCount: composite.buyCount,
+        sellCount: composite.sellCount
+      });
+    } catch { /* skip failed */ }
+  }
+
+  if (results.length === 0) {
+    document.getElementById('myStocksContent').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">⚠️</div>
+        <div class="empty-state-text">Could not load any saved stocks.<br>They may have been delisted or the API is unavailable.</div>
+      </div>
+    `;
+    return;
+  }
+
+  document.getElementById('myStocksContent').innerHTML = `
+    <div class="scan-results">
+      <div class="scan-row header">
+        <div>Symbol</div><div>Price</div><div>Change</div><div>Rating</div><div>Actions</div>
+      </div>
+      ${results.map(r => `
+        <div class="scan-row">
+          <div>
+            <div style="font-weight:600;color:#fff">${r.symbol}</div>
+            <div style="font-size:11px;color:#666">${r.name || ''}</div>
+          </div>
+          <div style="font-weight:600">${r.price.toFixed(2)}</div>
+          <div class="${r.change >= 0 ? 'up' : 'down'}">${r.change >= 0 ? '+' : ''}${r.change.toFixed(2)}%</div>
+          <div><span class="${r.ratingClass}">${r.rating}</span></div>
+          <div>
+            <button onclick="document.getElementById('symbol').value='${r.symbol}';analyzeStock();" style="background:#252836;border:1px solid #333;color:#6c9bff;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;margin-right:4px">View</button>
+            <button onclick="removeFromMyStocks('${r.symbol}');showMyStocks();" style="background:transparent;border:1px solid #f87171;color:#f87171;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:12px">✕</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function generateReasons(signals, composite, quote) {
+  const reasons = [];
+  const buys = signals.filter(s => s && s.signal === 'buy');
+  const sells = signals.filter(s => s && s.signal === 'sell');
+  
+  // Trend analysis
+  const sma20_50 = signals.find(s => s && s.name === 'SMA 20/50');
+  const sma50_200 = signals.find(s => s && s.name === 'SMA 50/200');
+  const ema12_26 = signals.find(s => s && s.name === 'EMA 12/26');
+  const trendBuy = [sma20_50, sma50_200, ema12_26].filter(s => s && s.signal === 'buy').length;
+  const trendSell = [sma20_50, sma50_200, ema12_26].filter(s => s && s.signal === 'sell').length;
+  
+  if (trendBuy >= 2) reasons.push({ type: 'trend', text: `Strong bullish trend alignment — ${trendBuy} of 3 moving average pairs show bullish signals (short-term MAs above long-term MAs), indicating sustained upward price momentum.` });
+  else if (trendSell >= 2) reasons.push({ type: 'trend', text: `Bearish trend alignment — ${trendSell} of 3 moving average pairs show bearish signals (short-term MAs below long-term MAs), indicating sustained downward price momentum.` });
+  else if (sma50_200 && sma50_200.signal === 'buy') reasons.push({ type: 'trend', text: `Price is above the 200-day SMA, suggesting the long-term trend remains bullish. However, shorter-term MAs are mixed, indicating potential consolidation.` });
+  else if (sma50_200 && sma50_200.signal === 'sell') reasons.push({ type: 'trend', text: `Price is below the 200-day SMA, suggesting the long-term trend is bearish. Caution is warranted.` });
+  
+  // Momentum
+  const rsiSig = signals.find(s => s && s.name === 'RSI (14)');
+  const macdSig = signals.find(s => s && s.name === 'MACD');
+  const stochSig = signals.find(s => s && s.name === 'Stochastic %K/%D');
+  
+  if (rsiSig && rsiSig.signal === 'buy') reasons.push({ type: 'momentum', text: `RSI at ${rsiSig.value} — in oversold territory, historically associated with higher probability of price rebounds. Watch for RSI divergence as additional confirmation.` });
+  else if (rsiSig && rsiSig.signal === 'sell') reasons.push({ type: 'momentum', text: `RSI at ${rsiSig.value} — in overbought territory, suggesting the stock may be overextended and due for a pullback.` });
+  
+  if (macdSig && macdSig.signal === 'buy' && macdSig.detail.includes('crossed')) reasons.push({ type: 'momentum', text: `MACD has crossed above its signal line — a widely followed momentum buy signal (CFA: MACD crossover strategy). This suggests bullish momentum acceleration.` });
+  else if (macdSig && macdSig.signal === 'sell' && macdSig.detail.includes('crossed')) reasons.push({ type: 'momentum', text: `MACD has crossed below its signal line — a bearish momentum signal. This suggests selling pressure is accelerating.` });
+  
+  // Volatility / Mean Reversion
+  const bbSig = signals.find(s => s && s.name === 'Bollinger Bands');
+  const atrSig = signals.find(s => s && s.name === 'ATR');
+  
+  if (bbSig && bbSig.signal === 'buy') reasons.push({ type: 'volatility', text: `Price is below the lower Bollinger Band — a mean reversion signal suggesting the stock is oversold relative to its recent volatility. Statistical studies show above-average returns following such readings.` });
+  else if (bbSig && bbSig.signal === 'sell') reasons.push({ type: 'volatility', text: `Price is above the upper Bollinger Band — the stock may be overextended relative to recent volatility. This is often followed by a reversion to the mean.` });
+  
+  // Volume
+  const obvSig = signals.find(s => s && s.name === 'OBV');
+  const mfiSig = signals.find(s => s && s.name === 'MFI');
+  
+  if (obvSig && obvSig.signal === 'buy') reasons.push({ type: 'volume', text: `On-Balance Volume (OBV) is rising — volume is confirming the upward price movement, suggesting genuine accumulation by institutional investors (CFA: volume confirmation principle).` });
+  else if (obvSig && obvSig.signal === 'sell') reasons.push({ type: 'volume', text: `OBV is declining — selling pressure is increasing on down days. Volume is not supporting the current price level, which is a bearish divergence.` });
+  
+  if (mfiSig && mfiSig.signal === 'buy') reasons.push({ type: 'volume', text: `Money Flow Index indicates accumulation — buying pressure dominates at current price levels.` });
+  else if (mfiSig && mfiSig.signal === 'sell') reasons.push({ type: 'volume', text: `Money Flow Index indicates distribution — selling pressure dominates, suggesting smart money may be exiting.` });
+  
+  // 52-week context
+  if (quote && quote.high52 && quote.low52) {
+    const c = quote.price;
+    const pctFromHigh = ((c - quote.high52) / quote.high52 * 100);
+    const pctFromLow = ((c - quote.low52) / quote.low52 * 100);
+    if (pctFromLow < 15) reasons.push({ type: 'context', text: `Trading near 52-week low (${pctFromLow.toFixed(1)}% above). Contrarian value investors may see opportunity, but confirm with fundamentals and trend reversal signals.` });
+    else if (pctFromHigh > -5) reasons.push({ type: 'context', text: `Trading near 52-week high (${Math.abs(pctFromHigh).toFixed(1)}% below). Momentum-driven but risk of pullback increases. Watch RSI and volume for signs of exhaustion.` });
+  }
+  
+  // Summary
+  if (composite.rating === 'Strong Buy' || composite.rating === 'Buy') {
+    reasons.push({ type: 'summary', text: `Overall: ${composite.buyCount} of 15 indicators signal BUY vs ${composite.sellCount} SELL. The preponderance of evidence supports a bullish outlook. Key risk: monitor for trend reversal signals and volume divergence.` });
+  } else if (composite.rating === 'Strong Sell' || composite.rating === 'Sell') {
+    reasons.push({ type: 'summary', text: `Overall: ${composite.sellCount} of 15 indicators signal SELL vs ${composite.buyCount} BUY. The preponderance of evidence supports a bearish outlook. Consider waiting for confirmation of trend reversal before taking long positions.` });
+  } else {
+    reasons.push({ type: 'summary', text: `Overall: Mixed signals (${composite.buyCount} Buy, ${composite.sellCount} Sell, ${composite.neutralCount} Neutral). No clear directional conviction. Consider waiting for stronger signal alignment or use this as a hold/neutral signal.` });
+  }
+  
+  return reasons;
+}
+
+function renderAnalysis(symbol, data, quote, signals, composite, fundamentals) {
+  const c = data[data.length-1].close;
+  const chg = quote.change || 0;
+  const isUp = chg >= 0;
+  const reasons = generateReasons(signals, composite, quote);
+  const fundScore = scoreFundamentals(fundamentals);
+  const isSaved = isInMyStocks(symbol);
+
+  // Save for re-render
+  lastAnalysisData = { data, quote, signals, composite, fundamentals };
+
+  document.getElementById('mainContent').innerHTML = `
+    <button class="back-btn" onclick="goBack()">← Back</button>
+    <button class="back-btn" onclick="toggleMyStocks('${symbol}')" style="margin-left:8px;${isSaved ? 'color:#fbbf24;border-color:#fbbf24' : ''}">${isSaved ? '★ Saved' : '☆ Save'}</button>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">
+        <div>
+          <div style="font-size:22px;font-weight:800;color:#fff">${quote.fullName || quote.name || symbol}</div>
+          <div style="font-size:13px;color:#666;margin-top:2px">${symbol}${quote.exchange ? ' • ' + quote.exchange : ''}${quote.currency ? ' • ' + quote.currency : ''}</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span class="${composite.ratingClass}" style="font-size:16px;padding:6px 16px">📊 Technical: ${composite.rating}</span>
+          ${fundScore ? `<span class="${fundScore.total >= 75 ? 'badge-buy' : fundScore.total >= 50 ? 'badge-neutral' : 'badge-sell'}" style="font-size:16px;padding:6px 16px">📈 Fundamental: ${fundScore.verdict} (${fundScore.total}/100)</span>` : ''}
+        </div>
+      </div>
+      ${quote.sector ? `<div style="font-size:12px;color:#555;margin-bottom:8px">${quote.sector}${quote.industry ? ' • ' + quote.industry : ''}</div>` : ''}
+      ${quote.description ? `<div class="company-desc">${quote.description}</div>` : ''}
+      <div class="overview">
+        <div class="ov-item"><div class="label">Price</div><div class="val">${c.toFixed(2)}</div><div class="change ${isUp?'up':'down'}">${isUp?'+':''}${chg.toFixed(2)}%</div></div>
+        <div class="ov-item"><div class="label">Buy Signals</div><div class="val up">${composite.buyCount}</div></div>
+        <div class="ov-item"><div class="label">Sell Signals</div><div class="val down">${composite.sellCount}</div></div>
+        <div class="ov-item"><div class="label">Neutral</div><div class="val" style="color:#fbbf24">${composite.neutralCount}</div></div>
+        ${quote.pe ? `<div class="ov-item"><div class="label">P/E</div><div class="val">${quote.pe.toFixed(1)}</div></div>` : ''}
+        ${quote.pb ? `<div class="ov-item"><div class="label">P/B</div><div class="val">${quote.pb.toFixed(2)}</div></div>` : ''}
+        ${quote.marketCap ? `<div class="ov-item"><div class="label">Market Cap</div><div class="val">${quote.marketCap >= 1e12 ? (quote.marketCap/1e12).toFixed(2)+'T' : (quote.marketCap/1e9).toFixed(1)+'B'}</div></div>` : ''}
+        ${quote.high52 ? `<div class="ov-item"><div class="label">52W Range</div><div class="val" style="font-size:13px">${quote.low52.toFixed(0)} - ${quote.high52.toFixed(0)}</div></div>` : ''}
+        ${quote.dividendYield ? `<div class="ov-item"><div class="label">Div Yield</div><div class="val">${(quote.dividendYield*100).toFixed(2)}%</div></div>` : ''}
+        ${quote.beta ? `<div class="ov-item"><div class="label">Beta</div><div class="val">${quote.beta.toFixed(2)}</div></div>` : ''}
+      </div>
+      <div style="margin-top:12px;font-size:11px;color:#555">Data range: ${data[0].date.toLocaleDateString()} → ${data[data.length-1].date.toLocaleDateString()}</div>
+    </div>
+
+    <div class="grid">
+      <div class="card full-width">
+        <div class="card-title">📈 Technical Indicators & Signals</div>
+        <div class="signal-grid">
+          ${signals.filter(s => s).map(s => `
+            <div class="signal-item">
+              <div class="name">${s.name}</div>
+              <div class="val">${s.value || '—'}</div>
+              <div class="sig sig-${s.signal}">${s.signal === 'buy' ? '▲ BUY' : s.signal === 'sell' ? '▼ SELL' : '● NEUTRAL'}</div>
+              <div style="font-size:10px;color:#666;margin-top:2px">${s.detail}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+
+    ${fundScore ? `
+    <div class="card" style="margin-top:16px">
+      <div class="card-title">📈 Fundamental Analysis (CFA-Aligned Scoring) <span style="font-size:12px;color:#888;font-weight:400">Confidence: ${fundScore.confidence}</span></div>
+      
+      <div style="margin-bottom:16px">
+        <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:8px">Quick Screen: ${fundScore.quickScreen.passes}/${fundScore.quickScreen.total} Passed</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${fundScore.quickScreen.checks.map(ch => `
+            <span style="font-size:11px;padding:3px 8px;border-radius:4px;${ch.pass ? 'background:#1a3a2a;color:#4ade80' : 'background:#3a1a1a;color:#f87171'}">${ch.pass ? '✓' : '✗'} ${ch.name}: ${ch.detail}</span>
+          `).join('')}
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px">
+        ${[
+          { label: 'Business Quality', data: fundScore.businessQuality, color: '#6c9bff' },
+          { label: 'Balance Sheet', data: fundScore.balanceSheet, color: '#a78bfa' },
+          { label: 'Cash Flow', data: fundScore.cashFlow, color: '#4ade80' },
+          { label: 'Valuation', data: fundScore.valuation, color: '#fbbf24' },
+          { label: 'Capital Allocation', data: fundScore.capitalAllocation, color: '#f87171' }
+        ].map(b => `
+          <div style="background:#15171f;border-radius:8px;padding:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-size:12px;color:#888">${b.label}</span>
+              <span style="font-size:14px;font-weight:700;color:${b.color}">${b.data.score}/${b.data.max}</span>
+            </div>
+            <div style="background:#252836;border-radius:4px;height:6px;overflow:hidden">
+              <div style="background:${b.color};height:100%;width:${(b.data.score/b.data.max*100)}%;border-radius:4px"></div>
+            </div>
+            ${b.data.details.map(d => `<div style="font-size:10px;color:#666;margin-top:3px">${d}</div>`).join('')}
+          </div>
+        `).join('')}
+      </div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+        ${fundScore.strengths.map(s => `<span style="font-size:11px;background:#1a3a2a;color:#4ade80;padding:3px 10px;border-radius:4px">✓ ${s}</span>`).join('')}
+        ${fundScore.redFlags.map(f => `<span style="font-size:11px;background:#3a1a1a;color:#f87171;padding:3px 10px;border-radius:4px">⚠ ${f}</span>`).join('')}
+      </div>
+
+      <div style="font-size:12px;color:#555;font-style:italic">Fundamental scoring based on CFA curriculum methodology. Scores are informational only — not investment advice.</div>
+    </div>
+    ` : ''}
+
+    <div class="card" style="margin-top:16px">
+      <div class="card-title">📋 Rating Reasons</div>
+      <div class="reasons">
+        <ul style="padding-left:18px">
+          ${reasons.map(r => `<li>${r.text}</li>`).join('')}
+        </ul>
+      </div>
+    </div>
+  `;
+}
+
+function goBack() {
+  if (lastScanResults && lastScanResults.length > 0) {
+    renderScanResults(lastScanResults, lastScanMarket);
+  } else {
+    const myStocks = getMyStocks();
+    document.getElementById('mainContent').innerHTML = `
+      <div class="card">
+        <div class="card-title">Welcome</div>
+        <p style="color:#888;font-size:14px;line-height:1.8">
+          Search any US or HK stock symbol to get a comprehensive technical analysis with buy/sell signals.<br><br>
+          <strong style="color:#ccc">Features:</strong><br>
+          • <strong>15 Technical Indicators</strong> — SMA, EMA, RSI, MACD, Bollinger Bands, Stochastic, ADX, OBV, Parabolic SAR, Ichimoku, Williams %R, CCI, ATR, VWAP, Money Flow Index<br>
+          • <strong>CFA-Aligned Signals</strong> — Moving average crossovers, momentum divergence, mean reversion, volume confirmation, trend strength<br>
+          • <strong>Composite Score</strong> — Weighted signal aggregation with Buy/Sell/Neutral rating<br>
+          • <strong>Company Info</strong> — Full name, description, sector, key fundamentals<br>
+          • <strong>Rating Reasons</strong> — Detailed explanation of why each rating was given<br>
+          • <strong>Market Scanner</strong> — Scan popular stocks for strongest buy/sell signals<br>
+          • <strong>My Stocks</strong> — Save your favorite stocks for quick access<br><br>
+          <strong style="color:#ccc">Try:</strong> AAPL, MSFT, GOOGL, TSLA, NVDA, AMZN (US) | 0700.HK, 9988.HK, 1299.HK, 0005.HK, 0388.HK (HK)
+        </p>
+        ${myStocks.length > 0 ? `
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid #2a2d3a">
+          <div style="font-size:13px;color:#888;margin-bottom:8px">⭐ Your saved stocks (${myStocks.length}):</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            ${myStocks.slice(0, 10).map(s => `<button onclick="document.getElementById('symbol').value='${s}';analyzeStock();" style="background:#15171f;border:1px solid #333;border-radius:4px;padding:4px 10px;font-size:12px;color:#ccc;cursor:pointer;transition:all 0.15s">${s}</button>`).join('')}
+            ${myStocks.length > 10 ? `<span style="font-size:12px;color:#666;padding:4px">+${myStocks.length - 10} more</span>` : ''}
+          </div>
+        </div>
+        ` : ''}
+      </div>
+    `;
+  }
+}
+
+function sortResults(results, sortBy) {
+  currentSort = sortBy;
+  const sorted = [...results];
+  switch(sortBy) {
+    case 'net': return sorted.sort((a, b) => b.net - a.net);
+    case 'price': return sorted.sort((a, b) => b.price - a.price);
+    case 'change': return sorted.sort((a, b) => b.change - a.change);
+    case 'name': return sorted.sort((a, b) => a.symbol.localeCompare(b.symbol));
+    case 'buy': return sorted.sort((a, b) => b.buyCount - a.buyCount);
+    case 'sell': return sorted.sort((a, b) => b.sellCount - a.sellCount);
+    default: return sorted;
+  }
+}
+
+function filterResults(results, filter) {
+  currentFilter = filter;
+  switch(filter) {
+    case 'all': return results;
+    case 'buy': return results.filter(r => r.rating.includes('Buy'));
+    case 'sell': return results.filter(r => r.rating.includes('Sell'));
+    case 'neutral': return results.filter(r => r.rating === 'Neutral');
+    case 'saved': return results.filter(r => isInMyStocks(r.symbol));
+    default: return results;
+  }
+}
+
+function renderScanResults(results, market, progress = '') {
+  let sorted = sortResults(results, currentSort);
+  const filtered = filterResults(sorted, currentFilter);
+
+  document.getElementById('mainContent').innerHTML = `
+    <div class="card">
+      <div class="card-title">🔍 Market Scanner — ${market === 'HK' ? '🇭🇰 Hong Kong' : '🇺🇸 United States'} ${progress ? `<span style="font-size:12px;color:#888;font-weight:400">(${progress})</span>` : `<span style="font-size:12px;color:#888;font-weight:400">(${filtered.length}/${results.length} stocks)</span>`}</div>
+
+      <div class="scan-header">
+        <div class="scan-sort">
+          <span style="font-size:11px;color:#666;margin-right:4px">Sort:</span>
+          <button class="scan-sort-btn ${currentSort === 'net' ? 'active' : ''}" onclick="renderScanResults(lastScanResults, lastScanMarket)">Score</button>
+          <button class="scan-sort-btn ${currentSort === 'buy' ? 'active' : ''}" onclick="currentSort='buy';renderScanResults(lastScanResults, lastScanMarket)">Buy Signals</button>
+          <button class="scan-sort-btn ${currentSort === 'change' ? 'active' : ''}" onclick="currentSort='change';renderScanResults(lastScanResults, lastScanMarket)">Change</button>
+          <button class="scan-sort-btn ${currentSort === 'name' ? 'active' : ''}" onclick="currentSort='name';renderScanResults(lastScanResults, lastScanMarket)">Name</button>
+        </div>
+        <div class="scan-filter">
+          <span style="font-size:11px;color:#666">Filter:</span>
+          <select onchange="currentFilter=this.value;renderScanResults(lastScanResults, lastScanMarket)">
+            <option value="all" ${currentFilter === 'all' ? 'selected' : ''}>All Ratings</option>
+            <option value="buy" ${currentFilter === 'buy' ? 'selected' : ''}>Buy Signals</option>
+            <option value="sell" ${currentFilter === 'sell' ? 'selected' : ''}>Sell Signals</option>
+            <option value="neutral" ${currentFilter === 'neutral' ? 'selected' : ''}>Neutral</option>
+            <option value="saved" ${currentFilter === 'saved' ? 'selected' : ''}>⭐ Saved</option>
+          </select>
+        </div>
+      </div>
+
+      ${filtered.length === 0 ? `
+        <div class="empty-state">
+          <div class="empty-state-icon">🔍</div>
+          <div class="empty-state-text">No stocks match the current filter.<br>Try changing the filter or scanning more stocks.</div>
+        </div>
+      ` : `
+      <div class="scan-results">
+        <div class="scan-row header">
+          <div>Symbol</div><div>Price</div><div>Change</div><div>Rating</div><div>Signals</div>
+        </div>
+        ${filtered.map(r => `
+          <div class="scan-row" onclick="document.getElementById('symbol').value='${r.symbol}';document.getElementById('market').value='${market}';analyzeStock();">
+            <div>
+              <div style="font-weight:600;color:#fff">${r.symbol} ${isInMyStocks(r.symbol) ? '⭐' : ''}</div>
+              <div style="font-size:11px;color:#666">${r.name || ''}</div>
+            </div>
+            <div style="font-weight:600">${r.price.toFixed(2)}</div>
+            <div class="${r.change >= 0 ? 'up' : 'down'}">${r.change >= 0 ? '+' : ''}${r.change.toFixed(2)}%</div>
+            <div><span class="${r.ratingClass}">${r.rating}</span></div>
+            <div>
+              <span style="color:#4ade80">${r.buyCount}B</span> / <span style="color:#f87171">${r.sellCount}S</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      `}
+    </div>
+  `;
+}
+
+// ===== MAIN FUNCTIONS =====
+async function analyzeStock() {
+  const symbol = document.getElementById('symbol').value.trim().toUpperCase();
+  if (!symbol) return;
+  if (isLoading) return;
+
+  setLoading(true);
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '<div class="card"><div class="loading"><div class="spinner"></div><span>Fetching data for ' + symbol + '...</span></div></div>';
+
+  try {
+    const [chartData, quote, fundamentals] = await Promise.all([
+      fetchChartData(symbol, '1y', '1d'),
+      fetchQuote(symbol).catch(() => null),
+      fetchFundamentals(symbol).catch(() => null)
+    ]);
+    if (chartData.data.length < 50) throw new Error('Insufficient data (need at least 50 days)');
+    const signals = INDICATORS.map(ind => analyzeIndicator(ind.name, chartData.data));
+    const composite = computeCompositeScore(signals);
+    const q = quote || { name: symbol, change: 0 };
+
+    // Save for re-render
+    lastAnalysisData = { data: chartData.data, quote: q, signals, composite, fundamentals };
+
+    renderAnalysis(symbol, chartData.data, q, signals, composite, fundamentals);
+  } catch (e) {
+    main.innerHTML = `<div class="card"><div class="error">Error: ${e.message}</div><p style="color:#888;font-size:13px;margin-top:8px">Check the symbol and try again. HK symbols need .HK suffix (e.g., 0700.HK).</p></div>`;
+  } finally {
+    setLoading(false);
+  }
+}
+
+let currentSort = 'net';
+let currentFilter = 'all';
+
+async function scanMarket() {
+  const market = document.getElementById('market').value;
+  const watchlist = market === 'HK' ? HK_WATCHLIST : US_WATCHLIST;
+  if (isLoading) return;
+
+  setLoading(true);
+  currentSort = 'net';
+  currentFilter = 'all';
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `<div class="card"><div class="card-title">🔍 Market Scanner — ${market === 'HK' ? '🇭🇰 Hong Kong' : '🇺🇸 United States'}</div><div class="loading"><div class="spinner"></div><span>Scanning ${watchlist.length} stocks...</span></div></div>`;
+
+  const results = [];
+  let completed = 0;
+
+  const batchSize = 5;
+  for (let i = 0; i < watchlist.length; i += batchSize) {
+    const batch = watchlist.slice(i, i + batchSize);
+    const promises = batch.map(async (sym) => {
+      try {
+        const [chartData, quote] = await Promise.all([
+          fetchChartData(sym, '1y', '1d'),
+          fetchQuote(sym).catch(() => null)
+        ]);
+        if (chartData.data.length < 50) return null;
+        const signals = INDICATORS.map(ind => analyzeIndicator(ind.name, chartData.data));
+        const composite = computeCompositeScore(signals);
+        const c = chartData.data[chartData.data.length-1].close;
+        return {
+          symbol: sym,
+          name: quote?.name || sym,
+          price: c,
+          change: quote?.change || 0,
+          rating: composite.rating,
+          ratingClass: composite.ratingClass,
+          net: composite.net,
+          buyCount: composite.buyCount,
+          sellCount: composite.sellCount
+        };
+      } catch { return null; }
+    });
+    const batchResults = await Promise.all(promises);
+    results.push(...batchResults.filter(Boolean));
+    completed += batch.length;
+
+    // Save for back button
+    lastScanResults = [...results];
+    lastScanMarket = market;
+
+    // Update UI progressively with progress
+    renderScanResults(results, market, `${Math.min(completed, watchlist.length)}/${watchlist.length}`);
+  }
+
+  setLoading(false);
+}
+
+// Event listeners
+document.getElementById('symbol').addEventListener('input', updateAutocomplete);
+document.getElementById('symbol').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const list = document.getElementById('autocompleteList');
+    if (list.classList.contains('show') && autocompleteIndex >= 0) {
+      return; // Let autocomplete handler deal with it
+    }
+    list.classList.remove('show');
+    analyzeStock();
+  } else if (['ArrowUp', 'ArrowDown', 'Escape'].includes(e.key)) {
+    navigateAutocomplete(e);
+  }
+});
+
+// Close autocomplete when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('.autocomplete')) {
+    document.getElementById('autocompleteList')?.classList.remove('show');
+  }
+});
+</script>
+</body>
+</html>
