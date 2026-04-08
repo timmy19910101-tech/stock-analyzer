@@ -98,6 +98,15 @@ canvas{width:100%!important;height:280px!important}
 .reasons h3{font-size:14px;color:#fff;margin-bottom:8px}
 .reasons li{font-size:13px;color:#aaa;line-height:1.7;margin-bottom:4px}
 .company-desc{font-size:13px;color:#888;line-height:1.6;margin-top:4px;padding:8px 0;border-bottom:1px solid #2a2d3a}
+.screener-panel{background:#15171f;border:1px solid #2a2d3a;border-radius:8px;padding:16px;margin-bottom:16px}
+.screener-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.screener-row:last-child{margin-bottom:0}
+.screener-label{font-size:11px;color:#888;min-width:80px}
+.screener-input{background:#1a1d29;border:1px solid #333;border-radius:4px;padding:6px 10px;font-size:12px;color:#e0e0e0;width:100px}
+.screener-select{background:#1a1d29;border:1px solid #333;border-radius:4px;padding:6px 10px;font-size:12px;color:#e0e0e0}
+.tf-btn{background:#1a1d29;border:1px solid #333;border-radius:4px;padding:2px 6px;font-size:10px;color:#888;cursor:pointer;transition:all 0.15s}
+.tf-btn:hover{color:#ccc;border-color:#444}
+.tf-btn.active{background:#252836;color:#6c9bff;border-color:#6c9bff}
 </style>
 </head>
 <body>
@@ -115,6 +124,7 @@ canvas{width:100%!important;height:280px!important}
     </div>
     <button id="analyzeBtn" onclick="analyzeStock()">Analyze</button>
     <button id="scanBtn" class="scan-btn" onclick="scanMarket()">🔍 Scan</button>
+    <button id="screenerBtn" onclick="showScreener()" style="background:#a78bfa">🎯 Screener</button>
     <button id="myStocksBtn" onclick="showMyStocks()">⭐ My Stocks</button>
   </div>
 </div>
@@ -142,6 +152,7 @@ const WORKER_URL = 'https://stock-api-proxy.timmy19910101.workers.dev';
 const PROXY = WORKER_URL + '/api/chart/';
 const PROXY2 = WORKER_URL + '/api/quote/';
 const SEARCH = WORKER_URL + '/api/search/';
+const FINNHUB_KEY = 'd75u2o1r01qm4b7s7bi0d75u2o1r01qm4b7s7big';
 const INDICATORS = [
   {name:'SMA 20/50',weight:2},{name:'SMA 50/200',weight:2},{name:'EMA 12/26',weight:2},
   {name:'RSI (14)',weight:2},{name:'MACD',weight:2},{name:'Bollinger Bands',weight:2},
@@ -255,6 +266,37 @@ async function fetchQuote(symbol) {
       };
     } catch { return null; }
   }
+}
+
+// ===== FINNHUB DATA =====
+async function finnhubQuote(symbol) {
+  try {
+    const usSymbol = symbol.replace('.HK', '');
+    const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(usSymbol)}&token=${FINNHUB_KEY}`);
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    return d;
+  } catch { return null; }
+}
+
+async function finnhubProfile(symbol) {
+  try {
+    const usSymbol = symbol.replace('.HK', '');
+    const r = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${encodeURIComponent(usSymbol)}&token=${FINNHUB_KEY}`);
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    return d;
+  } catch { return null; }
+}
+
+async function finnhubMetrics(symbol) {
+  try {
+    const usSymbol = symbol.replace('.HK', '');
+    const r = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${encodeURIComponent(usSymbol)}&metric=all&token=${FINNHUB_KEY}`);
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    return d.metric || {};
+  } catch { return null; }
 }
 
 // ===== TECHNICAL INDICATORS =====
@@ -1259,7 +1301,19 @@ function renderAnalysis(symbol, data, quote, signals, composite, fundamentals) {
       ${quote.sector ? `<div style="font-size:12px;color:#555;margin-bottom:8px">${quote.sector}${quote.industry ? ' • ' + quote.industry : ''}</div>` : ''}
       ${quote.description ? `<div class="company-desc">${quote.description}</div>` : ''}
       <div class="overview">
-        <div class="ov-item"><div class="label">Price</div><div class="val">${c.toFixed(2)}</div><div class="change ${isUp?'up':'down'}">${isUp?'+':''}${chg.toFixed(2)}%</div></div>
+        <div class="ov-item">
+          <div class="label">Price</div>
+          <div class="val">${c.toFixed(2)}</div>
+          <div class="change ${isUp?'up':'down'}" id="changeDisplay">${isUp?'+':''}${chg.toFixed(2)}%</div>
+          <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap">
+            <button class="tf-btn" onclick="showChange('1d')">1D</button>
+            <button class="tf-btn" onclick="showChange('1w')">1W</button>
+            <button class="tf-btn" onclick="showChange('1m')">1M</button>
+            <button class="tf-btn" onclick="showChange('3m')">3M</button>
+            <button class="tf-btn" onclick="showChange('6m')">6M</button>
+            <button class="tf-btn active" onclick="showChange('1y')">1Y</button>
+          </div>
+        </div>
         <div class="ov-item"><div class="label">Buy Signals</div><div class="val up">${composite.buyCount}</div></div>
         <div class="ov-item"><div class="label">Sell Signals</div><div class="val down">${composite.sellCount}</div></div>
         <div class="ov-item"><div class="label">Neutral</div><div class="val" style="color:#fbbf24">${composite.neutralCount}</div></div>
@@ -1472,10 +1526,13 @@ async function analyzeStock() {
   main.innerHTML = '<div class="card"><div class="loading"><div class="spinner"></div><span>Fetching data for ' + symbol + '...</span></div></div>';
 
   try {
-    const [chartData, quote, fundamentals] = await Promise.all([
+    const [chartData, quote, fundamentals, finnQuote, finnProfile, finnMetrics] = await Promise.all([
       fetchChartData(symbol, '1y', '1d'),
       fetchQuote(symbol).catch(() => null),
-      fetchFundamentals(symbol).catch(() => null)
+      fetchFundamentals(symbol).catch(() => null),
+      finnhubQuote(symbol).catch(() => null),
+      finnhubProfile(symbol).catch(() => null),
+      finnhubMetrics(symbol).catch(() => null)
     ]);
     if (chartData.data.length < 50) throw new Error('Insufficient data (need at least 50 days)');
     const signals = INDICATORS.map(ind => analyzeIndicator(ind.name, chartData.data));
@@ -1491,6 +1548,42 @@ async function analyzeStock() {
   } finally {
     setLoading(false);
   }
+}
+
+// ===== TIMEFRAME % CHANGE =====
+function showChange(tf) {
+  if (!lastAnalysisData || !lastAnalysisData.data) {
+    return;
+  }
+  const data = lastAnalysisData.data;
+  const buttons = document.querySelectorAll('.tf-btn');
+  
+  // Remove active class from all, add to clicked
+  buttons.forEach(btn => btn.classList.remove('active'));
+  const clickedBtn = document.querySelector(`.tf-btn[onclick="showChange('${tf}')"]`);
+  if (clickedBtn) clickedBtn.classList.add('active');
+  
+  // Calculate days back based on timeframe
+  const tfDays = { '1d': 1, '1w': 5, '1m': 21, '3m': 63, '6m': 126, '1y': 252 };
+  const days = tfDays[tf] || 252;
+  
+  if (data.length < days) {
+    document.getElementById('changeDisplay').textContent = `Insufficient data (${data.length} days)`;
+    return;
+  }
+  
+  const startIdx = data.length - days;
+  const startPrice = data[startIdx].close;
+  const endPrice = data[data.length - 1].close;
+  
+  if (!startPrice || startPrice === 0) return;
+  
+  const pctChange = ((endPrice - startPrice) / startPrice) * 100;
+  const isUp = pctChange >= 0;
+  const display = document.getElementById('changeDisplay');
+  
+  display.className = `change ${isUp ? 'up' : 'down'}`;
+  display.textContent = `${isUp ? '+' : ''}${pctChange.toFixed(2)}% (${tf.toUpperCase()})`;
 }
 
 let currentSort = 'net';
@@ -1549,6 +1642,211 @@ async function scanMarket() {
   }
 
   setLoading(false);
+}
+
+// ===== SMART SCREENER =====
+async function showScreener() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="card">
+      <div class="card-title">🎯 Smart Stock Screener</div>
+      <div class="screener-panel">
+        <div class="screener-row">
+          <span class="screener-label">Market:</span>
+          <select id="screenerMarket" class="screener-select">
+            <option value="US">🇺🇸 US Market</option>
+            <option value="HK">🇭🇰 HK Market</option>
+          </select>
+        </div>
+        <div class="screener-row">
+          <span class="screener-label">Min Price:</span>
+          <input type="number" id="screenerMinPrice" class="screener-input" placeholder="0" value="0">
+          <span class="screener-label">Max Price:</span>
+          <input type="number" id="screenerMaxPrice" class="screener-input" placeholder="9999" value="9999">
+        </div>
+        <div class="screener-row">
+          <span class="screener-label">Min Market Cap:</span>
+          <select id="screenerMinCap" class="screener-select">
+            <option value="0">Any</option>
+            <option value="1000000000">$1B+</option>
+            <option value="10000000000">$10B+</option>
+            <option value="50000000000">$50B+</option>
+            <option value="100000000000">$100B+</option>
+          </select>
+          <span class="screener-label">Sector:</span>
+          <select id="screenerSector" class="screener-select">
+            <option value="">All Sectors</option>
+            <option value="Technology">Technology</option>
+            <option value="Healthcare">Healthcare</option>
+            <option value="Financial">Financial Services</option>
+            <option value="Consumer">Consumer Goods</option>
+            <option value="Energy">Energy</option>
+            <option value="Industrial">Industrial</option>
+          </select>
+        </div>
+        <div class="screener-row">
+          <span class="screener-label">Signal:</span>
+          <select id="screenerSignal" class="screener-select">
+            <option value="">Any Signal</option>
+            <option value="buy">Buy Signals Only</option>
+            <option value="sell">Sell Signals Only</option>
+            <option value="strong-buy">Strong Buy Only</option>
+          </select>
+          <span class="screener-label">Min Volume:</span>
+          <input type="number" id="screenerMinVol" class="screener-input" placeholder="0" value="0">
+        </div>
+        <div class="screener-row">
+          <button onclick="runScreener()" style="background:#6c9bff;border:none;border-radius:6px;padding:8px 20px;font-size:13px;color:#fff;cursor:pointer;font-weight:600">🔍 Run Screener</button>
+          <span style="font-size:11px;color:#666;margin-left:12px">Uses Finnhub API • Fast scan with filters</span>
+        </div>
+      </div>
+      <div id="screenerResults"></div>
+    </div>
+  `;
+}
+
+async function runScreener() {
+  const market = document.getElementById('screenerMarket').value;
+  const minPrice = parseFloat(document.getElementById('screenerMinPrice').value) || 0;
+  const maxPrice = parseFloat(document.getElementById('screenerMaxPrice').value) || 99999;
+  const minCap = parseFloat(document.getElementById('screenerMinCap').value) || 0;
+  const sector = document.getElementById('screenerSector').value;
+  const signal = document.getElementById('screenerSignal').value;
+  const minVol = parseFloat(document.getElementById('screenerMinVol').value) || 0;
+
+  const resultsDiv = document.getElementById('screenerResults');
+  resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div><span>Fetching stock list...</span></div>';
+
+  try {
+    // Use Finnhub stock list for full market coverage
+    const exchange = market === 'HK' ? 'HK' : 'US';
+    const listUrl = `https://finnhub.io/api/v1/stock/symbol?exchange=${exchange}&token=${FINNHUB_KEY}`;
+    const listResp = await fetch(listUrl);
+    const stockList = await listResp.json();
+    
+    if (!Array.isArray(stockList)) throw new Error('Failed to get stock list');
+    
+    resultsDiv.innerHTML = `<div style="color:#888;font-size:12px;margin-bottom:8px">Found ${stockList.length} stocks. Filtering...</div>`;
+
+    // Filter and analyze in batches
+    const results = [];
+    const batchSize = 5;
+    const maxStocks = 200; // Limit to prevent timeout
+    
+    const toProcess = stockList.slice(0, maxStocks);
+    
+    for (let i = 0; i < toProcess.length; i += batchSize) {
+      const batch = toProcess.slice(i, i + batchSize);
+      
+      const promises = batch.map(async (stock) => {
+        try {
+          const symbol = market === 'HK' ? stock.symbol : stock.symbol;
+          
+          // Get quote and basic data
+          const [quoteData, profileData] = await Promise.all([
+            finnhubQuote(symbol).catch(() => null),
+            finnhubProfile(symbol).catch(() => null)
+          ]);
+          
+          if (!quoteData || !quoteData.c) return null;
+          
+          const price = quoteData.c;
+          const change = quoteData.dp || 0;
+          const marketCap = profileData?.marketCapitalization || 0;
+          const vol = quoteData.v || 0;
+          const stockSector = profileData?.finnhubIndustry || '';
+          
+          // Apply filters
+          if (price < minPrice || price > maxPrice) return null;
+          if (minCap > 0 && marketCap < minCap) return null;
+          if (minVol > 0 && vol < minVol) return null;
+          if (sector && !stockSector.toLowerCase().includes(sector.toLowerCase())) return null;
+          
+          // Get technical signals (simplified)
+          const chartData = await fetchChartData(symbol, '3m', '1d').catch(() => null);
+          if (!chartData || chartData.data.length < 50) return null;
+          
+          const signals = INDICATORS.map(ind => analyzeIndicator(ind.name, chartData.data));
+          const composite = computeCompositeScore(signals);
+          
+          // Apply signal filter
+          if (signal === 'buy' && !composite.rating.includes('Buy')) return null;
+          if (signal === 'sell' && !composite.rating.includes('Sell')) return null;
+          if (signal === 'strong-buy' && composite.rating !== 'Strong Buy') return null;
+          
+          return {
+            symbol,
+            name: profileData?.name || stock.description || symbol,
+            price,
+            change,
+            marketCap,
+            rating: composite.rating,
+            ratingClass: composite.ratingClass,
+            net: composite.net,
+            buyCount: composite.buyCount,
+            sellCount: composite.sellCount,
+            sector: stockSector
+          };
+        } catch { return null; }
+      });
+      
+      const batchResults = await Promise.all(promises);
+      results.push(...batchResults.filter(Boolean));
+      
+      // Update progress
+      resultsDiv.innerHTML = `
+        <div style="color:#888;font-size:12px;margin-bottom:8px">
+          Scanned ${Math.min(i + batchSize, toProcess.length)}/${toProcess.length} stocks • Found ${results.length} matches
+        </div>
+        ${results.length > 0 ? renderScreenerResults(results) : ''}
+      `;
+      
+      // Small delay to avoid rate limits
+      await new Promise(r => setTimeout(r, 200));
+    }
+
+    if (results.length === 0) {
+      resultsDiv.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">🔍</div>
+          <div class="empty-state-text">No stocks match your criteria.<br>Try adjusting the filters.</div>
+        </div>
+      `;
+    } else {
+      resultsDiv.innerHTML = `
+        <div style="color:#4ade80;font-size:13px;margin-bottom:12px">✓ Found ${results.length} stocks matching criteria</div>
+        ${renderScreenerResults(results)}
+      `;
+    }
+  } catch (e) {
+    resultsDiv.innerHTML = `<div class="error">Error: ${e.message}</div>`;
+  }
+}
+
+function renderScreenerResults(results) {
+  const sorted = results.sort((a, b) => b.net - a.net);
+  return `
+    <div class="scan-results">
+      <div class="scan-row header">
+        <div>Symbol</div><div>Price</div><div>Change</div><div>Rating</div><div>Signals</div>
+      </div>
+      ${sorted.slice(0, 100).map(r => `
+        <div class="scan-row" onclick="document.getElementById('symbol').value='${r.symbol}';analyzeStock();">
+          <div>
+            <div style="font-weight:600;color:#fff">${r.symbol}</div>
+            <div style="font-size:11px;color:#666">${r.name || ''}</div>
+          </div>
+          <div style="font-weight:600">${r.price.toFixed(2)}</div>
+          <div class="${r.change >= 0 ? 'up' : 'down'}">${r.change >= 0 ? '+' : ''}${r.change.toFixed(2)}%</div>
+          <div><span class="${r.ratingClass}">${r.rating}</span></div>
+          <div>
+            <span style="color:#4ade80">${r.buyCount}B</span> / <span style="color:#f87171">${r.sellCount}S</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    ${sorted.length > 100 ? `<div style="text-align:center;color:#666;font-size:11px;margin-top:8px">Showing top 100 of ${sorted.length} results</div>` : ''}
+  `;
 }
 
 // Event listeners
