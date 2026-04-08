@@ -104,9 +104,6 @@ canvas{width:100%!important;height:280px!important}
 .screener-label{font-size:11px;color:#888;min-width:80px}
 .screener-input{background:#1a1d29;border:1px solid #333;border-radius:4px;padding:6px 10px;font-size:12px;color:#e0e0e0;width:100px}
 .screener-select{background:#1a1d29;border:1px solid #333;border-radius:4px;padding:6px 10px;font-size:12px;color:#e0e0e0}
-.tf-btn{background:#1a1d29;border:1px solid #333;border-radius:4px;padding:2px 6px;font-size:10px;color:#888;cursor:pointer;transition:all 0.15s}
-.tf-btn:hover{color:#ccc;border-color:#444}
-.tf-btn.active{background:#252836;color:#6c9bff;border-color:#6c9bff}
 </style>
 </head>
 <body>
@@ -1301,19 +1298,7 @@ function renderAnalysis(symbol, data, quote, signals, composite, fundamentals) {
       ${quote.sector ? `<div style="font-size:12px;color:#555;margin-bottom:8px">${quote.sector}${quote.industry ? ' • ' + quote.industry : ''}</div>` : ''}
       ${quote.description ? `<div class="company-desc">${quote.description}</div>` : ''}
       <div class="overview">
-        <div class="ov-item">
-          <div class="label">Price</div>
-          <div class="val">${c.toFixed(2)}</div>
-          <div class="change ${isUp?'up':'down'}" id="changeDisplay">${isUp?'+':''}${chg.toFixed(2)}%</div>
-          <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap">
-            <button class="tf-btn" onclick="showChange('1d')">1D</button>
-            <button class="tf-btn" onclick="showChange('1w')">1W</button>
-            <button class="tf-btn" onclick="showChange('1m')">1M</button>
-            <button class="tf-btn" onclick="showChange('3m')">3M</button>
-            <button class="tf-btn" onclick="showChange('6m')">6M</button>
-            <button class="tf-btn active" onclick="showChange('1y')">1Y</button>
-          </div>
-        </div>
+        <div class="ov-item"><div class="label">Price</div><div class="val">${c.toFixed(2)}</div><div class="change ${isUp?'up':'down'}">${isUp?'+':''}${chg.toFixed(2)}%</div></div>
         <div class="ov-item"><div class="label">Buy Signals</div><div class="val up">${composite.buyCount}</div></div>
         <div class="ov-item"><div class="label">Sell Signals</div><div class="val down">${composite.sellCount}</div></div>
         <div class="ov-item"><div class="label">Neutral</div><div class="val" style="color:#fbbf24">${composite.neutralCount}</div></div>
@@ -1548,42 +1533,6 @@ async function analyzeStock() {
   } finally {
     setLoading(false);
   }
-}
-
-// ===== TIMEFRAME % CHANGE =====
-function showChange(tf) {
-  if (!lastAnalysisData || !lastAnalysisData.data) {
-    return;
-  }
-  const data = lastAnalysisData.data;
-  const buttons = document.querySelectorAll('.tf-btn');
-  
-  // Remove active class from all, add to clicked
-  buttons.forEach(btn => btn.classList.remove('active'));
-  const clickedBtn = document.querySelector(`.tf-btn[onclick="showChange('${tf}')"]`);
-  if (clickedBtn) clickedBtn.classList.add('active');
-  
-  // Calculate days back based on timeframe
-  const tfDays = { '1d': 1, '1w': 5, '1m': 21, '3m': 63, '6m': 126, '1y': 252 };
-  const days = tfDays[tf] || 252;
-  
-  if (data.length < days) {
-    document.getElementById('changeDisplay').textContent = `Insufficient data (${data.length} days)`;
-    return;
-  }
-  
-  const startIdx = data.length - days;
-  const startPrice = data[startIdx].close;
-  const endPrice = data[data.length - 1].close;
-  
-  if (!startPrice || startPrice === 0) return;
-  
-  const pctChange = ((endPrice - startPrice) / startPrice) * 100;
-  const isUp = pctChange >= 0;
-  const display = document.getElementById('changeDisplay');
-  
-  display.className = `change ${isUp ? 'up' : 'down'}`;
-  display.textContent = `${isUp ? '+' : ''}${pctChange.toFixed(2)}% (${tf.toUpperCase()})`;
 }
 
 let currentSort = 'net';
