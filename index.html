@@ -180,6 +180,21 @@ const HK_NAMES = {
 const HK_WATCHLIST = Object.keys(HK_NAMES);
 const US_WATCHLIST = ['AAPL','MSFT','GOOGL','AMZN','NVDA','META','TSLA','BRK-B','JPM','V','JNJ','WMT','PG','MA','HD','UNH','DIS','PYPL','INTC','NFLX','AMD','CRM','COST','TMO','ABT','MRK','PFE','T','VZ','KO','PEP'];
 
+// Full HK stock list for screener (expanded beyond HK_NAMES)
+const HK_FULL_LIST = [
+  '0700.HK','9988.HK','1299.HK','0005.HK','0388.HK','0001.HK','0002.HK','0003.HK',
+  '0006.HK','0011.HK','0012.HK','0016.HK','0017.HK','0027.HK','0066.HK','0101.HK',
+  '0142.HK','0175.HK','0241.HK','0267.HK','0288.HK','0386.HK','0398.HK','0669.HK',
+  '0688.HK','0762.HK','0823.HK','0836.HK','0857.HK','0868.HK','0883.HK','0914.HK',
+  '0939.HK','0941.HK','0960.HK','0968.HK','0981.HK','0992.HK','1038.HK','1044.HK',
+  '1071.HK','1088.HK','1109.HK','1113.HK','1177.HK','1199.HK','1211.HK','1233.HK',
+  '1288.HK','1398.HK','1766.HK','1810.HK','1876.HK','1919.HK','1928.HK','1997.HK',
+  '2007.HK','2018.HK','2020.HK','2269.HK','2313.HK','2318.HK','2331.HK','2382.HK',
+  '2388.HK','2600.HK','2628.HK','2688.HK','2899.HK','3328.HK','3690.HK','3968.HK',
+  '3988.HK','6098.HK','6618.HK','6862.HK','9618.HK','9633.HK','9698.HK','9888.HK',
+  '9961.HK','9999.HK'
+];
+
 // ===== MY STOCKS (localStorage) =====
 const MY_STOCKS_KEY = 'stockAnalyzer_myStocks';
 function getMyStocks() { try { const s = localStorage.getItem(MY_STOCKS_KEY); return s ? JSON.parse(s) : []; } catch { return []; } }
@@ -1393,7 +1408,9 @@ async function showMyStocks() {
 }
 
 // ===== SCREENER =====
-const HK_SCREENER_FALLBACK = HK_WATCHLIST.slice(0, 50);
+// Predefined lists for scanner (quick scan)
+const US_SCREENER_LIST = ['AAPL','MSFT','GOOGL','AMZN','NVDA','META','TSLA','BRK-B','JPM','V','JNJ','WMT','PG','MA','HD','UNH','DIS','PYPL','INTC','NFLX','AMD','CRM','COST','TMO','ABT','MRK','PFE','T','VZ','KO','PEP','BA','NKE','GS','MS','C','BAC','WFC','CVX','XOM','COP','CAT','DE','IBM','ORCL','ADBE','TXN','QCOM','AVGO','SBUX','MCD','LOW','TGT','USB','CSCO','MDLZ','GILD','AMGN','ISRG','REGN','VRTX','BIIB','MRNA','SQ','SHOP','SNOW','PLTR','COIN','UBER','LYFT','DKNG','MARA','RIOT','PLUG','AI','PATH','UPST','HOOD','AFRM','ABNB','RBLX','RIVN','LCID','NIO','SOFI'];
+const HK_SCREENER_FALLBACK = HK_FULL_LIST;
 
 async function showScreener() {
   const main = document.getElementById('mainContent');
@@ -1404,8 +1421,8 @@ async function showScreener() {
         <div class="screener-row">
           <span class="screener-label">Market:</span>
           <select id="screenerMarket" class="screener-select">
-            <option value="US">🇺🇸 US Market</option>
-            <option value="HK">🇭🇰 HK Market</option>
+            <option value="US">🇺🇸 US Market (~100 stocks)</option>
+            <option value="HK">🇭🇰 HK Market (~80 stocks)</option>
           </select>
         </div>
         <div class="screener-row">
@@ -1435,7 +1452,7 @@ async function showScreener() {
         </div>
         <div class="screener-row">
           <button onclick="runScreener()" style="background:#6c9bff;border:none;border-radius:6px;padding:8px 20px;font-size:13px;color:#fff;cursor:pointer;font-weight:600">🔍 Run Screener</button>
-          <span style="font-size:11px;color:#666;margin-left:12px">US: Finnhub API • HK: Predefined list</span>
+          <span style="font-size:11px;color:#666;margin-left:12px">Filters applied to ALL stocks in the list</span>
         </div>
       </div>
       <div id="screenerResults"></div>
@@ -1457,22 +1474,18 @@ async function runScreener() {
     let stockList;
 
     if (market === 'US') {
-      const listResp = await fetch(`https://finnhub.io/api/v1/stock/symbol?exchange=US&token=${FINNHUB_KEY}`);
-      stockList = await listResp.json();
-      if (!Array.isArray(stockList)) throw new Error('Failed to get US stock list');
-      // Filter to common stocks only
-      stockList = stockList.filter(s => s.type === 'Common Stock');
+      // Use predefined list of popular US stocks (Finnhub stock list is too large/unreliable)
+      stockList = US_SCREENER_LIST.map(s => ({ symbol: s, description: s }));
     } else {
-      // HK: use hardcoded fallback
+      // HK: use full watchlist
       stockList = HK_SCREENER_FALLBACK.map(s => ({ symbol: s, description: getDisplayName(s) }));
     }
 
-    resultsDiv.innerHTML = `<div style="color:#888;font-size:12px;margin-bottom:8px">Found ${stockList.length} stocks. Filtering...</div>`;
+    resultsDiv.innerHTML = `<div style="color:#888;font-size:12px;margin-bottom:8px">Scanning ${stockList.length} ${market} stocks...</div>`;
 
     const results = [];
     const batchSize = 5;
-    const maxStocks = market === 'US' ? 100 : stockList.length;
-    const toProcess = stockList.slice(0, maxStocks);
+    const toProcess = stockList;
 
     for (let i = 0; i < toProcess.length; i += batchSize) {
       const batch = toProcess.slice(i, i + batchSize);
@@ -1480,13 +1493,6 @@ async function runScreener() {
       const promises = batch.map(async (stock) => {
         try {
           const sym = stock.symbol;
-          let profileData = null;
-
-          // For US stocks, get profile for sector filter
-          if (market === 'US' && sector) {
-            profileData = await finnhubProfile(sym);
-            if (profileData && !profileData.finnhubIndustry?.toLowerCase().includes(sector.toLowerCase())) return null;
-          }
 
           const r = await scanSingleStock(sym);
           if (!r) return null;
@@ -1499,7 +1505,15 @@ async function runScreener() {
           if (signal === 'sell' && !r.rating.includes('Sell')) return null;
           if (signal === 'strong-buy' && r.rating !== 'Strong Buy') return null;
 
-          if (profileData) r.name = profileData.name || r.name;
+          // Sector filter (US only, via Finnhub - skip if no match)
+          if (market === 'US' && sector) {
+            try {
+              const profileData = await finnhubProfile(sym);
+              if (profileData && profileData.finnhubIndustry && !profileData.finnhubIndustry.toLowerCase().includes(sector.toLowerCase())) return null;
+              if (profileData && profileData.name) r.name = profileData.name;
+            } catch {}
+          }
+
           return r;
         } catch { return null; }
       });
