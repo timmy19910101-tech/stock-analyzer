@@ -1331,22 +1331,27 @@ async function scanMarket() {
     const batch = watchlist.slice(i, i + batchSize);
     const promises = batch.map(async (sym) => {
       try {
-        const [chartData, finnQuote, finnProfile] = await Promise.all([
-          fetchChartData(sym, '1y', '1d'),
-          finnhubQuote(sym),
-          finnhubProfile(sym)
-        ]);
-        if (chartData.data.length < 50) return null;
+        const chartData = await fetchChartData(sym, '1y', '1d');
+        if (chartData.data.length < 30) return null;
         const signals = INDICATORS.map(ind => analyzeIndicator(ind.name, chartData.data));
         const composite = computeCompositeScore(signals);
         const c = chartData.data[chartData.data.length-1].close;
-        const prevClose = finnQuote?.pc || c;
+        const prevBar = chartData.data.length > 1 ? chartData.data[chartData.data.length-2].close : c;
+
+        // Try Finnhub for better price/change (works for US, may fail for HK on free tier)
+        let name = sym, price = c, change = ((c - prevBar) / prevBar * 100);
+        try {
+          const [finnQuote, finnProfile] = await Promise.all([finnhubQuote(sym), finnhubProfile(sym)]);
+          if (finnQuote?.c) { price = finnQuote.c; change = finnQuote.dp || change; }
+          if (finnProfile?.name) name = finnProfile.name;
+        } catch {}
+
         return {
           symbol: sym,
-          name: finnProfile?.name || sym,
+          name: name,
           cnName: HK_NAMES_CN[sym] || '',
-          price: c,
-          change: finnQuote?.dp || ((c - prevClose) / prevClose * 100),
+          price: price,
+          change: change,
           rating: composite.rating,
           ratingClass: composite.ratingClass,
           net: composite.net,
@@ -1503,19 +1508,8 @@ async function runScreener() {
   resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div><span>Fetching stock list...</span></div>';
 
   try {
-    let stockList;
-    if (market === 'HK') {
-      // Finnhub free tier doesn't support HK stock/symbol - use local list
-      stockList = HK_WATCHLIST.map(s => ({symbol: s, description: HK_NAMES_CN[s] || s}));
-    } else {
-      try {
-        const listResp = await rateLimitedFetch(`${FINNHUB_BASE}/stock/symbol?exchange=US&token=${FINNHUB_KEY}`);
-        stockList = await listResp.json();
-        if (!Array.isArray(stockList)) throw new Error('Failed to get stock list');
-      } catch(e) {
-        throw new Error('Failed to get stock list: ' + e.message);
-      }
-    }
+    // Use local watchlists (Finnhub free tier: no CORS for stock/symbol, HK blocked entirely)
+    stockList = (market === 'HK' ? HK_WATCHLIST : US_WATCHLIST).map(s => ({symbol: s, description: s}));
 
     const maxStocks = 200;
     const toProcess = stockList.slice(0, maxStocks);
@@ -1527,27 +1521,41 @@ async function runScreener() {
       const promises = batch.map(async (stock) => {
         try {
           const symbol = stock.symbol;
-          const [quoteData, profileData] = await Promise.all([
-            finnhubQuote(symbol),
-            finnhubProfile(symbol)
-          ]);
-          if (!quoteData || !quoteData.c) return null;
+          const isHK = symbol.endsWith('.HK');
           const cnName = HK_NAMES_CN[symbol] || '';
 
-          const price = quoteData.c;
-          const change = quoteData.dp || 0;
-          const marketCap = profileData?.marketCapitalization ? profileData.marketCapitalization * 1e6 : 0;
-          const vol = quoteData.v || 0;
+          // Fetch chart data first (works for both markets via Yahoo proxy)
+          const chartData = await fetchChartData(symbol, '1y', '1d').catch(() => null);
+          if (!chartData || chartData.data.length < 30) return null;
+
+          // Get price/change from chart data (works for all)
+          const lastBar = chartData.data[chartData.data.length - 1];
+          const prevClose = chartData.data.length > 1 ? chartData.data[chartData.data.length - 2].close : lastBar.close;
+          let price = lastBar.close;
+          let change = prevClose ? ((price - prevClose) / prevClose * 100) : 0;
+          let marketCap = 0;
+          let vol = lastBar.volume || 0;
+          let stockSector = '';
+          let name = symbol;
+
+          // Try Finnhub for US stocks (profile, better price)
+          if (!isHK) {
+            const [quoteData, profileData] = await Promise.all([
+              finnhubQuote(symbol).catch(() => null),
+              finnhubProfile(symbol).catch(() => null)
+            ]);
+            if (quoteData?.c) { price = quoteData.c; change = quoteData.dp || change; vol = quoteData.v || vol; }
+            if (profileData) {
+              name = profileData.name || name;
+              marketCap = profileData.marketCapitalization ? profileData.marketCapitalization * 1e6 : 0;
+              stockSector = profileData.finnhubIndustry || '';
+            }
+          }
 
           if (price < minPrice || price > maxPrice) return null;
           if (minCap > 0 && marketCap < minCap) return null;
           if (minVol > 0 && vol < minVol) return null;
-          const stockSector = profileData?.finnhubIndustry || '';
           if (sector && stockSector !== sector) return null;
-
-          // Get technical signals
-          const chartData = await fetchChartData(symbol, '3m', '1d').catch(() => null);
-          if (!chartData || chartData.data.length < 50) return null;
 
           const signals = INDICATORS.map(ind => analyzeIndicator(ind.name, chartData.data));
           const composite = computeCompositeScore(signals);
@@ -1564,8 +1572,7 @@ async function runScreener() {
           }
 
           return {
-            symbol, name: profileData?.name || stock.description || symbol,
-            price, change, marketCap, rating: composite.rating,
+            symbol, name, cnName, price, change, marketCap, rating: composite.rating,
             ratingClass: composite.ratingClass, net: composite.net,
             buyCount: composite.buyCount, sellCount: composite.sellCount,
             sector: stockSector
