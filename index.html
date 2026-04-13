@@ -136,8 +136,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 <script>
 // ===== CONFIG =====
-const WORKER_URL = 'https://stock-api-proxy.timmy19910101.workers.dev';
-const PROXY = WORKER_URL + '/api/chart/';
+const WORKER_URL = '';
+const PROXY = '/api/chart/';
 const FINNHUB_KEY = 'd75u2o1r01qm4b7s7bi0d75u2o1r01qm4b7s7big';
 const FINNHUB_BASE = 'https://finnhub.io/api/v1';
 
@@ -1321,9 +1321,9 @@ function renderScanResults(results, market, progress = '') {
 
 async function testConnectivity() {
   const tests = [
-    { name: 'Cloudflare Site', url: 'https://stock-analyzer.timmy19910101.workers.dev/' },
-    { name: 'Chart Proxy (US)', url: 'https://stock-api-proxy.timmy19910101.workers.dev/api/chart/AAPL?range=1y&interval=1d' },
-    { name: 'Chart Proxy (HK)', url: 'https://stock-api-proxy.timmy19910101.workers.dev/api/chart/0700.HK?range=1y&interval=1d' },
+    { name: 'Cloudflare Site', url: window.location.origin + '/' },
+    { name: 'Chart Proxy (US)', url: window.location.origin + '/api/chart/AAPL?range=1y&interval=1d' },
+    { name: 'Chart Proxy (HK)', url: window.location.origin + '/api/chart/0700.HK?range=1y&interval=1d' },
     { name: 'Finnhub API', url: 'https://finnhub.io/api/v1/quote?symbol=AAPL&token=d75u2o1r01qm4b7s7bi0d75u2o1r01qm4b7s7big' }
   ];
   const main = document.getElementById('mainContent');
