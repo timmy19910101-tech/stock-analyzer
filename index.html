@@ -112,7 +112,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <button id="analyzeBtn" onclick="analyzeStock()">Analyze</button>
     <button id="scanBtn" class="scan-btn" onclick="scanMarket()">🔍 Scan</button>
     <button id="screenerBtn" onclick="showScreener()" style="background:#a78bfa">🎯 Screener</button>
-    <button id="myStocksBtn" onclick="showMyStocks()">⭐ My Stocks</button>
+    <button id="myStocksBtn" onclick="testConnectivity()" style="background:#6366f1">📡 Test Connection</button> <button onclick="showMyStocks()">⭐ My Stocks</button>
   </div>
 </div>
 
@@ -1316,6 +1316,31 @@ function renderScanResults(results, market, progress = '') {
         `).join('')}
       </div>`}
     </div>`;
+}
+
+
+async function testConnectivity() {
+  const tests = [
+    { name: 'Cloudflare Site', url: 'https://stock-analyzer.timmy19910101.workers.dev/' },
+    { name: 'Chart Proxy (US)', url: 'https://stock-api-proxy.timmy19910101.workers.dev/api/chart/AAPL?range=1y&interval=1d' },
+    { name: 'Chart Proxy (HK)', url: 'https://stock-api-proxy.timmy19910101.workers.dev/api/chart/0700.HK?range=1y&interval=1d' },
+    { name: 'Finnhub API', url: 'https://finnhub.io/api/v1/quote?symbol=AAPL&token=d75u2o1r01qm4b7s7bi0d75u2o1r01qm4b7s7big' }
+  ];
+  const main = document.getElementById('mainContent');
+  let html = '<div class="card"><div class="card-title">📡 Connectivity Test</div><div class="scan-results">';
+  for (const t of tests) {
+    try {
+      const start = Date.now();
+      const r = await fetch(t.url, { signal: AbortSignal.timeout(10000) });
+      const elapsed = Date.now() - start;
+      const data = await r.text();
+      html += '<div class="scan-row" style="grid-template-columns:1fr 1fr"><div>' + t.name + '</div><div style="color:#4ade80">✅ OK (' + elapsed + 'ms, ' + data.length + ' bytes)</div></div>';
+    } catch(e) {
+      html += '<div class="scan-row" style="grid-template-columns:1fr 1fr"><div>' + t.name + '</div><div style="color:#f87171">❌ ' + e.message + '</div></div>';
+    }
+  }
+  html += '</div><div style="margin-top:12px;font-size:12px;color:#888">Run this on mobile data to see which endpoint fails.</div></div>';
+  main.innerHTML = html;
 }
 
 async function scanMarket() {
