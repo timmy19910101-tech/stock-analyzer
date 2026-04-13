@@ -165,7 +165,10 @@ async function rateLimitedFetch(url) {
     await new Promise(r => setTimeout(r, MIN_API_DELAY - elapsed));
   }
   lastApiCall = Date.now();
-  const resp = await fetch(url);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  const resp = await fetch(url, { signal: controller.signal });
+  clearTimeout(timeout);
   if (resp.status === 429) {
     throw new Error('Rate limited by API. Please wait a moment and try again.');
   }
@@ -1325,7 +1328,7 @@ async function scanMarket() {
   lastScanResults = []; lastScanMarket = market;
 
   const results = [];
-  const batchSize = 5;
+  const batchSize = 3;
 
   for (let i = 0; i < watchlist.length; i += batchSize) {
     const batch = watchlist.slice(i, i + batchSize);
@@ -1519,7 +1522,7 @@ async function runScreener() {
     const maxStocks = 200;
     const toProcess = stockList.slice(0, maxStocks);
     const results = [];
-    const batchSize = 5;
+    const batchSize = 3;
 
     for (let i = 0; i < toProcess.length; i += batchSize) {
       const batch = toProcess.slice(i, i + batchSize);
