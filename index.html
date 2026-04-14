@@ -51,7 +51,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .badge-strong-sell{background:#3a0f0f;color:#ef4444;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700}
 .signal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
 .signal-item{background:#15171f;border-radius:8px;padding:10px 12px;text-align:center;border-bottom:1px solid #1f222e}
-.signal-item .name{font-size:11px;color:#888;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:2px}
+.signal-item .name{font-size:11px;color:#888;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:2px;flex-wrap:wrap}
 .signal-item .val{font-size:15px;font-weight:700;color:#fff}
 .signal-item .sig{font-size:11px;margin-top:4px;font-weight:600}
 .sig-buy{color:#4ade80}.sig-sell{color:#f87171}.sig-neutral{color:#fbbf24}
@@ -115,7 +115,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .cached-banner{background:#2a2a1a;border:1px solid #fbbf24;color:#fbbf24;padding:10px 16px;border-radius:8px;margin-bottom:12px;font-size:13px;display:flex;align-items:center;gap:8px}
 .quick-scan-btn{background:linear-gradient(135deg,#4ade80,#22c55e)!important;color:#000!important;font-weight:700!important;padding:12px 24px!important;font-size:15px!important;border-radius:10px!important}
 .weekly-confirm{background:#15171f;border-radius:8px;padding:12px 16px;margin-bottom:12px;border-left:3px solid #6c9bff;font-size:13px}
-</style>
+@media(max-width:600px){.signal-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px}.signal-item{padding:8px}.signal-item .name{font-size:10px}}</style>
 </head>
 <body>
 
@@ -1221,7 +1221,7 @@ function renderAnalysis(symbol, data, quoteInfo, signals, composite, fundScore, 
             <div class="name">${s.name} <span class="info-icon" onclick="event.stopPropagation();showIndicatorInfo('${s.name}')">â„¹ï¸</span></div>
             <div class="val">${s.value || 'â€”'}</div>
             <div class="sig sig-${s.signal}">${s.signal === 'buy' ? 'â–² BUY' : s.signal === 'sell' ? 'â–¼ SELL' : 'â— NEUTRAL'}</div>
-            <div style="font-size:10px;color:#666;margin-top:2px">${s.detail}</div>
+            <div style="font-size:10px;color:#666;margin-top:2px">${s.detail.length > 30 ? s.detail.substring(0,30)+'...' : s.detail}</div>
           </div>
         `).join('')}
       </div>
