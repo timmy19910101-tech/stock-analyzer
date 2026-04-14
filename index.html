@@ -1279,6 +1279,9 @@ function renderAnalysis(symbol, data, quoteInfo, signals, composite, fundScore, 
       </div>
     </div>
   `;
+  if (quoteInfo.industry && !symbol.endsWith('.HK')) {
+    setTimeout(() => loadIndustryComparison(symbol, quoteInfo.industry), 500);
+  }
 }
 
 function toggleMyStocks(symbol) {
