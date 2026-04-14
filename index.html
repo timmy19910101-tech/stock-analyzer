@@ -159,28 +159,28 @@ const FINNHUB_KEY = 'd75u2o1r01qm4b7s7bi0d75u2o1r01qm4b7s7big';
 const FINNHUB_BASE = 'https://finnhub.io/api/v1';
 
 const INDICATOR_INFO = {
-  'SMA 20/50': 'Short-term trend. When SMA20 crosses above SMA50 (Golden Cross), it signals upward momentum. Death Cross (below) signals decline.',
-  'SMA 50/200': 'Long-term trend indicator. Golden Cross (SMA50 > SMA200) is a strong buy signal. Death Cross is bearish.',
-  'EMA 12/26': 'Exponential Moving Average crossover. More responsive than SMA. Buy when EMA12 > EMA26.',
-  'RSI (14)': 'Relative Strength Index measures overbought (>70) or oversold (<30) conditions. Mid-range (40-60) is neutral.',
-  'MACD': 'Moving Average Convergence Divergence. Buy signal when MACD line crosses above signal line. Histogram shows momentum.',
-  'Bollinger Bands': 'Price channels based on volatility. Price near upper band = overbought. Near lower band = oversold. Band width indicates volatility.',
-  'Stochastic %K/%D': 'Momentum oscillator comparing closing price to range. >80 overbought, <20 oversold. %K/%D crossover is signal.',
-  'ADX': 'Average Directional Index measures trend strength. >25 = strong trend, <20 = weak/no trend. Does NOT indicate direction.',
-  'OBV': 'On-Balance Volume. Rising OBV = accumulation (buying pressure). Falling OBV = distribution. Divergence from price is significant.',
-  'Parabolic SAR': 'Stop and Reverse. Dots below price = uptrend (buy). Dots above price = downtrend (sell). Trailing stop indicator.',
-  'Williams %R': 'Momentum indicator. -20 to 0 = overbought. -80 to -100 = oversold. Similar to Stochastic.',
-  'CCI': 'Commodity Channel Index. >+100 = overbought, <-100 = oversold. Measures deviation from average price.',
-  'ATR': 'Average True Range. Measures volatility, not direction. High ATR = volatile, wider stop-losses needed.',
-  'VWAP': 'Volume-Weighted Average Price. Price above VWAP = bullish intraday. Institutional benchmark price.',
-  'MFI': 'Money Flow Index. Volume-weighted RSI. >80 overbought, <20 oversold. Combines price AND volume.'
+  'SMA 20/50': '📋 What: The average price over the last 20 days vs 50 days.\n💡 Why it matters: Like a speedometer for short-term trends. When the 20-day line crosses ABOVE the 50-day line (called a "Golden Cross"), the stock is gaining upward momentum — a Buy signal. When it crosses BELOW ("Death Cross"), momentum is fading — a Sell signal.\n🎯 Action: Look for Golden Cross as buy entry, Death Cross as sell warning.',
+  'SMA 50/200': '📋 What: The average price over 50 days vs 200 days — the most watched indicator by professionals.\n💡 Why it matters: This is like checking the overall weather pattern, not just today\'s forecast. A Golden Cross (50-day above 200-day) has historically been one of the most reliable long-term Buy signals. Death Cross is a strong Sell signal.\n🎯 Action: This is your "big picture" compass. Don\'t fight it — if Death Cross, be very cautious.',
+  'EMA 12/26': '📋 What: Similar to SMA but reacts faster to recent price changes. Think of it as SMA with a turbo button.\n💡 Why it matters: Because it weighs recent prices more heavily, it catches trend changes earlier than SMA. When EMA12 crosses above EMA26, short-term momentum is turning bullish.\n🎯 Action: Use this for timing your entry/exit. It signals faster than SMA but can give false signals in choppy markets.',
+  'RSI (14)': '📋 What: A score from 0-100 showing if a stock is "too hot" or "too cold". Think of it like a price thermostat.\n💡 Why it matters: Above 70 = overbought (stock rose too fast, may pull back). Below 30 = oversold (stock fell too much, may bounce back). Between 40-60 is the "comfort zone".\n🎯 Action: Buy when RSI is below 30 (oversold bargain). Sell/take profit when RSI is above 70 (overheated). Be careful — strong stocks can STAY overbought for weeks.',
+  'MACD': '📋 What: The "trend detective" — shows both the direction AND strength of a trend using two lines and a histogram.\n💡 Why it matters: When the MACD line (blue) crosses above the signal line (orange), buyers are taking control — Buy signal. The histogram bars show momentum growing (taller bars) or fading (shrinking bars).\n🎯 Action: Buy on upward crossover with growing histogram. Sell on downward crossover. Zero line crossover confirms trend change.',
+  'Bollinger Bands': '📋 What: Three lines that form a "price envelope" around the stock. The middle line is the average, upper/lower bands are 2 standard deviations away.\n💡 Why it matters: Think of it like a highway with guardrails. Price normally stays within the bands. When price touches the UPPER band, the stock may be overextended (expensive). Touching the LOWER band suggests it\'s cheap.\n🎯 Action: Buy near lower band, sell near upper band. Squeeze (bands narrowing) means a big move is coming soon.',
+  'Stochastic %K/%D': '📋 What: Shows where the current price sits within its recent range. Like grading on a curve — is today\'s price near the top or bottom of recent prices?\n💡 Why it matters: Above 80 means the stock is near its recent high (could be overbought). Below 20 means near its recent low (could be oversold). The %K/%D crossover is the trigger signal.\n🎯 Action: Buy when %K crosses above %D while both are below 20. Sell when %K crosses below %D while both are above 80.',
+  'ADX': '📋 What: Measures HOW STRONG a trend is, regardless of direction. Like measuring wind speed without caring which way it blows.\n💡 Why it matters: Above 25 = strong trend (good for trend-following). Below 20 = weak/choppy market (avoid trading or use range strategies). This tells you WHETHER to trade, not which direction.\n🎯 Action: Only use trend-following signals (like SMA crossovers) when ADX > 25. When ADX < 20, the market is sideways — wait or use different strategies.',
+  'OBV': '📋 What: Tracks the "smart money" by adding volume on up-days and subtracting on down-days. Rising OBV = more buying pressure.\n💡 Why it matters: Price can lie, but volume doesn\'t. If price is rising but OBV is falling, the rally lacks real buying support — it\'s a warning sign. If OBV rises while price is flat, smart money may be accumulating before a breakout.\n🎯 Action: Confirm price moves with OBV. Rising price + rising OBV = healthy. Rising price + falling OBV = suspicious (consider taking profits).',
+  'Parabolic SAR': '📋 What: Dots placed above or below the price candlesticks. Think of it as trailing guide rails.\n💡 Why it matters: Dots BELOW the price = uptrend is intact (hold your position). Dots ABOVE = downtrend (time to sell or short). The dots act as dynamic stop-loss levels.\n🎯 Action: Simple rule — buy when dots flip below price, sell when dots flip above. Move your stop-loss to the most recent dot level.',
+  'Williams %R': '📋 What: Similar to Stochastic but inverted. Ranges from -100 (oversold) to 0 (overbought). Think of it as a "discount meter".\n💡 Why it matters: Readings between -20 and 0 suggest the stock is overbought (expensive). Between -80 and -100 suggests oversold (discounted). It\'s fast-reacting and good for timing.\n🎯 Action: Buy signals when Williams %R drops below -80 then rises back above. Sell when it rises above -20 then drops below.',
+  'CCI': '📋 What: Measures how far the current price has deviated from its statistical average. Like measuring if today\'s temperature is unusually hot or cold.\n💡 Why it matters: Above +100 = unusually high (overbought). Below -100 = unusually low (oversold). Can stay at extremes during strong trends.\n🎯 Action: In range-bound markets, buy below -100 and sell above +100. In trending markets, use CCI > +100 as trend confirmation.',
+  'ATR': '📋 What: Measures how much a stock typically moves per day. Like checking the "wave height" before surfing.\n💡 Why it matters: High ATR = big daily swings (volatile, risky but opportunity-rich). Low ATR = calm, predictable movement. Use it to set realistic expectations and stop-loss distances.\n🎯 Action: Set your stop-loss at 1.5-2x ATR from your entry price. If ATR is $3, set stop-loss $4.50-$6 away. Don\'t use ATR alone for buy/sell decisions.',
+  'VWAP': '📋 What: The average price weighted by volume — what the "average" buyer actually paid today. Institutional traders use this as their benchmark.\n💡 Why it matters: If price is ABOVE VWAP, buyers are in control (bullish). Below VWAP, sellers dominate (bearish). Institutions often buy below VWAP and sell above it.\n🎯 Action: For day trading — buy when price crosses above VWAP. For swing trading — stocks above VWAP have institutional support.',
+  'MFI': '📋 What: Like RSI but includes volume. It measures buying vs selling pressure with money flow. Think of it as RSI that also counts how many people are buying.\n💡 Why it matters: Above 80 = too much money flowing in (overbought). Below 20 = money flowing out (oversold). Because it includes volume, it\'s more reliable than RSI alone.\n🎯 Action: Buy when MFI crosses above 20 from oversold. Sell when MFI crosses below 80 from overbought. Divergence between MFI and price is a powerful reversal signal.'
 };
 
 const FUNDAMENTAL_INFO = {
-  'Business Quality': 'Evaluates revenue stability, profit margins, and competitive positioning based on available financial metrics.',
-  'Balance Sheet': 'Assesses financial health: debt levels, liquidity ratios, and ability to meet obligations.',
-  'Cash Flow': 'Analyzes operating cash flow, free cash flow generation, and cash flow consistency.',
-  'Valuation': 'Compares price to earnings, sales, and book value relative to sector peers to determine if stock is fairly priced.'
+  'Business Quality': '📋 What: Scores the company\'s ability to generate consistent profits.\n💡 Why it matters: A great business can survive bad management, but a bad business can\'t survive even great management. We look at profit margins, revenue growth, and return on equity.\n🎯 Action: Scores above 70 = quality business. Below 40 = concerns about long-term viability.',
+  'Balance Sheet': '📋 What: Checks if the company has too much debt and enough cash to survive tough times. Like checking someone\'s credit score before lending money.\n💡 Why it matters: Companies with low debt and plenty of cash can survive recessions, invest in growth, and even buy competitors on the cheap. High debt = bankruptcy risk.\n🎯 Action: Scores above 70 = financially healthy. Below 40 = high debt risk — be cautious, especially in rising interest rate environments.',
+  'Cash Flow': '📋 What: Tracks actual cash coming in vs going out. "Cash is king" — profits on paper don\'t matter if cash isn\'t flowing in.\n💡 Why it matters: A company can report "profits" while burning cash (through accounting tricks). Strong cash flow means the company can pay dividends, buy back shares, and invest in growth without borrowing.\n🎯 Action: Scores above 70 = strong cash generator. Below 40 = cash flow concerns — the company may need to raise money (dilute shares) or cut dividends.',
+  'Valuation': '📋 What: Determines if the stock is cheap, fairly priced, or expensive compared to its earnings and peers. Like checking if a house is fairly priced for the neighborhood.\n💡 Why it matters: Even a great company is a bad investment if you overpay. We compare P/E ratio, P/S ratio, and P/B ratio against sector averages.\n🎯 Action: Scores above 70 = potentially undervalued (good entry). Below 40 = overvalued — you may be paying too much.'
 };
 
 const INDICATORS = [
@@ -203,7 +203,7 @@ function showTooltip(key, type, el) {
   const tooltip = document.getElementById('infoTooltip');
   const overlay = document.getElementById('tooltipOverlay');
   const content = document.getElementById('tooltipContent');
-  content.innerHTML = '<strong style="color:#fff">' + key + '</strong><br><br>' + info;
+  content.innerHTML = '<strong style="color:#fff">' + key + '</strong><br><br>' + info.replace(/\n/g, '<br>');
   tooltip.classList.add('show');
   overlay.classList.add('show');
   // Position near the element
@@ -1210,6 +1210,8 @@ function renderAnalysis(symbol, data, quoteInfo, signals, composite, fundScore, 
     </div>
 
     ${weeklyHtml}
+    <div id="industryComparison" style="margin-bottom:16px"></div>
+    <script>loadIndustryComparison('${symbol}', '${quoteInfo.industry || ''}');</script>
     <div class="card" style="margin-bottom:16px">
       <div class="card-title">📈 Technical Indicators & Signals</div>
       <div class="signal-grid">
@@ -1308,7 +1310,7 @@ function showWelcome() {
         • <strong>Market Scanner & Screener</strong> — Find opportunities<br><br>
         <strong style="color:#ccc">Try:</strong> AAPL, MSFT, GOOGL (US) | 0700.HK, 9988.HK, 1299.HK (HK)
       </p>
-      ${lastMarket ? `<div style="margin-top:16px;text-align:center"><button class="quick-scan-btn" onclick="quickScan()">⚡ Quick Scan ${lastMarket === 'HK' ? '🇭🇰 HK' : '🇺🇸 US'} Market</button></div>` : ''}
+      <div style="margin-top:16px;text-align:center"><button class="quick-scan-btn" onclick="quickScan()">⚡ Quick Scan ${lastMarket === 'HK' ? '🇭🇰 HK' : '🇺🇸 US'} Market</button></div>
       ${myStocks.length > 0 ? `
       <div style="margin-top:16px;padding-top:16px;border-top:1px solid #2a2d3a">
         <div style="font-size:13px;color:#888;margin-bottom:8px">⭐ Your saved stocks (${myStocks.length}):</div>
@@ -1320,11 +1322,10 @@ function showWelcome() {
 }
 
 function quickScan() {
-  const lastMarket = loadLastMarket();
-  if (lastMarket) {
-    document.getElementById('market').value = lastMarket;
-    scanMarket();
-  }
+  let m = loadLastMarket();
+  if (!m) { m = 'US'; saveLastMarket('US'); }
+  document.getElementById('market').value = m;
+  scanMarket();
 }
 
 // ===== MAIN ANALYZE =====
@@ -1801,6 +1802,82 @@ function renderScreenerTable(results) {
         </div>
       `).join('')}
     </div>`;
+}
+
+// ===== INDUSTRY COMPARISON =====
+const INDUSTRY_CACHE_KEY = 'stockAnalyzer_industryCache';
+function getIndustryCache() { try { return JSON.parse(localStorage.getItem(INDUSTRY_CACHE_KEY) || '{}'); } catch { return {}; } }
+function setIndustryCacheEntry(sym, industry) { try { const c = getIndustryCache(); c[sym] = industry; localStorage.setItem(INDUSTRY_CACHE_KEY, JSON.stringify(c)); } catch {} }
+
+async function loadIndustryComparison(symbol, industry) {
+  if (!industry || symbol.endsWith('.HK')) return;
+  const container = document.getElementById('industryComparison');
+  if (!container) return;
+  container.innerHTML = '<div class="card" style="margin-bottom:16px"><div class="loading"><div class="spinner"></div><span>Finding industry peers...</span></div></div>';
+  try {
+    const cache = getIndustryCache();
+    const usList = US_WATCHLIST.filter(s => s !== symbol);
+    const peers = [];
+    const batchSize = 5;
+    const maxPeers = 7;
+    for (let i = 0; i < usList.length && peers.length < maxPeers; i += batchSize) {
+      const batch = usList.slice(i, i + batchSize);
+      const results = await Promise.all(batch.map(async sym => {
+        try {
+          const ind = cache[sym];
+          if (ind === industry) return sym;
+          if (ind && ind !== industry) return null;
+          const prof = await finnhubProfile(sym);
+          if (prof?.finnhubIndustry) {
+            setIndustryCacheEntry(sym, prof.finnhubIndustry);
+            if (prof.finnhubIndustry === industry) return sym;
+          }
+          return null;
+        } catch { return null; }
+      }));
+      peers.push(...results.filter(Boolean));
+    }
+    if (peers.length === 0) { container.innerHTML = ''; return; }
+    const toCompare = peers.slice(0, maxPeers);
+    const peerData = [];
+    for (let i = 0; i < toCompare.length; i += 3) {
+      const batch = toCompare.slice(i, i + 3);
+      const results = await Promise.all(batch.map(async sym => {
+        try {
+          const [chart, quote] = await Promise.all([fetchChartData(sym, '1y', '1d'), finnhubQuote(sym)]);
+          if (chart.data.length < 30) return null;
+          const signals = INDICATORS.map(ind => analyzeIndicator(ind.name, chart.data));
+          const composite = computeCompositeScore(signals);
+          const price = chart.data[chart.data.length - 1].close;
+          const change = quote?.dp || 0;
+          return { symbol: sym, price, change, rating: composite.rating, ratingClass: composite.ratingClass, net: composite.net };
+        } catch { return null; }
+      }));
+      peerData.push(...results.filter(Boolean));
+      await new Promise(r => setTimeout(r, 200));
+    }
+    if (peerData.length === 0) { container.innerHTML = ''; return; }
+    // Add current stock
+    const mainEl = document.querySelector('.card-title span[class*="badge"]');
+    const currentRating = mainEl ? mainEl.textContent : '';
+    peerData.sort((a, b) => b.net - a.net);
+    container.innerHTML = `
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">📊 Industry Comparison: ${industry}</div>
+        <div class="scan-results">
+          <div class="scan-row header"><div>Symbol</div><div>Price</div><div>Change</div><div>Rating</div><div>Score</div></div>
+          ${peerData.map(p => `
+            <div class="scan-row" ${p.symbol === symbol ? 'style="background:#1a2536;border-left:3px solid #6c9bff"' : ''} onclick="document.getElementById('symbol').value='${p.symbol}';analyzeStock();">
+              <div><div style="font-weight:600;color:#fff">${p.symbol}${p.symbol === symbol ? ' ◀' : ''}</div></div>
+              <div style="font-weight:600">${p.price.toFixed(2)}</div>
+              <div class="${p.change >= 0 ? 'up' : 'down'}">${p.change >= 0 ? '+' : ''}${p.change.toFixed(2)}%</div>
+              <div><span class="${p.ratingClass}">${p.rating}</span></div>
+              <div style="font-size:13px;color:${p.net > 0 ? '#4ade80' : p.net < 0 ? '#f87171' : '#fbbf24'}">${p.net > 0 ? '+' : ''}${p.net.toFixed(1)}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+  } catch { container.innerHTML = ''; }
 }
 
 // ===== EVENT LISTENERS =====
