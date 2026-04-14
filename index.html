@@ -1221,7 +1221,7 @@ function renderAnalysis(symbol, data, quoteInfo, signals, composite, fundScore, 
             <div class="name">${s.name} <span class="info-icon" onclick="event.stopPropagation();showIndicatorInfo('${s.name}')">â„¹ï¸</span></div>
             <div class="val">${s.value || 'â€”'}</div>
             <div class="sig sig-${s.signal}">${s.signal === 'buy' ? 'â–² BUY' : s.signal === 'sell' ? 'â–¼ SELL' : 'â— NEUTRAL'}</div>
-            <div style="font-size:10px;color:#666;margin-top:2px">${s.detail.length > 30 ? s.detail.substring(0,30)+'...' : s.detail}</div>
+            <div style="font-size:10px;color:#666;margin-top:2px">${s.detail}</div>
           </div>
         `).join('')}
       </div>
