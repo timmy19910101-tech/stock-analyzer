@@ -1219,7 +1219,7 @@ function renderAnalysis(symbol, data, quoteInfo, signals, composite, fundScore, 
       <div class="signal-grid">
         ${signals.filter(s => s).map(s => `
           <div class="signal-item">
-            <div class="name">${s.name} <span class="info-icon" onclick="event.stopPropagation();showIndicatorInfo('${s.name}')">â„¹ï¸</span></div>
+            <div class="name">${s.name} <span class="info-icon" onclick="event.stopPropagation();showIndicatorInfo('${s.name}')">i</span></div>
             <div class="val">${s.value || 'â€”'}</div>
             <div class="sig sig-${s.signal}">${s.signal === 'buy' ? 'â–² BUY' : s.signal === 'sell' ? 'â–¼ SELL' : 'â— NEUTRAL'}</div>
             <div style="font-size:10px;color:#666;margin-top:2px">${s.detail}</div>
@@ -1251,7 +1251,7 @@ function renderAnalysis(symbol, data, quoteInfo, signals, composite, fundScore, 
         ].map(b => `
           <div style="background:#15171f;border-radius:8px;padding:12px">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-              <span style="font-size:12px;color:#888">${b.label}${FUNDAMENTAL_INFO[b.label] ? ` <span class="info-icon" onclick="event.stopPropagation();showIndicatorInfo('${b.label}')">â„¹ï¸</span>` : ''}</span>
+              <span style="font-size:12px;color:#888">${b.label}${FUNDAMENTAL_INFO[b.label] ? ` <span class="info-icon" onclick="event.stopPropagation();showIndicatorInfo('${b.label}')">i</span>` : ''}</span>
               <span style="font-size:14px;font-weight:700;color:${b.color}">${b.data.score}/${b.data.max}</span>
             </div>
             <div style="background:#252836;border-radius:4px;height:6px;overflow:hidden">
