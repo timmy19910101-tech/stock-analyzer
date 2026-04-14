@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stock Signal Analyzer — HK & US Markets</title>
+<title>Stock Signal Analyzer â€” HK & US Markets</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f1117;color:#e0e0e0;min-height:100vh}
@@ -37,6 +37,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   .header h1{font-size:16px}
   .search-box input{width:140px}
   .search-box button{padding:8px 12px;font-size:13px}
+  .scan-row{grid-template-columns:2fr 1fr 1fr 1fr;gap:4px;padding:8px 10px;font-size:12px}
+  .scan-row.header>div:last-child{display:none}
+  .scan-row>div:last-child{display:none}
 }
 .card{background:#1a1d29;border:1px solid #2a2d3a;border-radius:12px;padding:20px;overflow:hidden;animation:fadeIn 0.3s ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
@@ -46,9 +49,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .badge-neutral{background:#2a2a1a;color:#fbbf24;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700}
 .badge-strong-buy{background:#0f3a1a;color:#22c55e;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700}
 .badge-strong-sell{background:#3a0f0f;color:#ef4444;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700}
-.signal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
-.signal-item{background:#15171f;border-radius:8px;padding:10px 12px;text-align:center}
-.signal-item .name{font-size:11px;color:#888;margin-bottom:4px}
+.signal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.signal-item{background:#15171f;border-radius:8px;padding:10px 12px;text-align:center;border-bottom:1px solid #1f222e}
+.signal-item .name{font-size:11px;color:#888;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:2px}
 .signal-item .val{font-size:15px;font-weight:700;color:#fff}
 .signal-item .sig{font-size:11px;margin-top:4px;font-weight:600}
 .sig-buy{color:#4ade80}.sig-sell{color:#f87171}.sig-neutral{color:#fbbf24}
@@ -94,14 +97,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .tf-btn.active{background:#252836;color:#6c9bff;border-color:#6c9bff}
 .progress-bar{background:#252836;border-radius:4px;height:6px;overflow:hidden;margin:8px 0}
 .progress-bar-fill{background:linear-gradient(90deg,#6c9bff,#4ade80);height:100%;transition:width 0.3s;border-radius:4px}
-.info-icon{display:inline-block;cursor:pointer;color:#555;font-size:13px;margin-left:4px;vertical-align:middle;user-select:none;-webkit-user-select:none}
-.info-icon:hover{color:#6c9bff}
-.tooltip-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:998;background:rgba(0,0,0,0.3)}
-.tooltip-overlay.show{display:block}
-.info-tooltip{display:none;position:fixed;z-index:999;background:#252836;border:1px solid #6c9bff;border-radius:10px;padding:14px 16px;max-width:320px;font-size:13px;color:#ccc;line-height:1.5;box-shadow:0 8px 32px rgba(0,0,0,0.5)}
-.info-tooltip.show{display:block}
-.info-tooltip .tt-close{position:absolute;top:6px;right:10px;cursor:pointer;color:#888;font-size:16px}
-.info-tooltip .tt-close:hover{color:#fff}
+.info-icon{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#555;font-size:12px;margin-left:4px;width:28px;height:28px;border-radius:50%;vertical-align:middle;user-select:none;-webkit-user-select:none;transition:all 0.15s}
+.info-icon:hover{color:#6c9bff;background:rgba(108,155,255,0.1)}
+.indicator-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;justify-content:center;align-items:center}
+.indicator-modal.show{display:flex}
+.indicator-modal-content{background:#1a1a2e;border-radius:12px;padding:20px;max-width:400px;width:90%;max-height:80vh;overflow-y:auto;color:#e0e0e0;font-size:14px;line-height:1.6}
+.indicator-modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.indicator-modal-title{font-size:16px;font-weight:700;color:#fff}
+.indicator-modal-close{background:none;border:none;color:#888;font-size:24px;cursor:pointer;padding:4px 8px}
+.indicator-modal-close:hover{color:#fff}
+.info-section{margin-bottom:8px}
+.info-label{font-weight:600;color:#6c9bff}
 .confidence-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;margin-left:8px}
 .conf-high{background:#1a3a2a;color:#4ade80}
 .conf-medium{background:#2a2a1a;color:#fbbf24}
@@ -114,25 +120,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <body>
 
 <div class="header">
-  <h1>📊 Stock <span>Signal Analyzer</span></h1>
+  <h1>ðŸ“Š Stock <span>Signal Analyzer</span></h1>
   <div class="search-box">
     <select id="market" onchange="saveLastMarket(this.value);updateAutocomplete()">
-      <option value="US">🇺🇸 US Market</option>
-      <option value="HK">🇭🇰 HK Market</option>
+      <option value="US">ðŸ‡ºðŸ‡¸ US Market</option>
+      <option value="HK">ðŸ‡­ðŸ‡° HK Market</option>
     </select>
     <div class="autocomplete">
       <input type="text" id="symbol" placeholder="Search symbol (e.g. AAPL, 0700.HK)" autocomplete="off">
       <div class="autocomplete-list" id="autocompleteList"></div>
     </div>
     <button id="analyzeBtn" onclick="analyzeStock()">Analyze</button>
-    <button id="scanBtn" class="scan-btn" onclick="scanMarket()">🔍 Scan</button>
-    <button id="screenerBtn" onclick="showScreener()" style="background:#a78bfa">🎯 Screener</button>
-    <button id="myStocksBtn" onclick="testConnectivity()" style="background:#6366f1">📡 Test Connection</button> <button onclick="showMyStocks()">⭐ My Stocks</button>
+    <button id="scanBtn" class="scan-btn" onclick="scanMarket()">ðŸ” Scan</button>
+    <button id="screenerBtn" onclick="showScreener()" style="background:#a78bfa">ðŸŽ¯ Screener</button>
+    <button id="myStocksBtn" onclick="testConnectivity()" style="background:#6366f1">ðŸ“¡ Test Connection</button> <button onclick="showMyStocks()">â­ My Stocks</button>
   </div>
 </div>
 
-<div class="tooltip-overlay" id="tooltipOverlay" onclick="closeTooltip()"></div>
-<div class="info-tooltip" id="infoTooltip"><span class="tt-close" onclick="closeTooltip()">×</span><div id="tooltipContent"></div></div>
+<div id="indicatorModal" class="indicator-modal" onclick="if(event.target===this)closeIndicatorModal()">
+  <div class="indicator-modal-content">
+    <div class="indicator-modal-header">
+      <div id="indicatorModalTitle" class="indicator-modal-title"></div>
+      <button class="indicator-modal-close" onclick="closeIndicatorModal()">&times;</button>
+    </div>
+    <div id="indicatorModalBody"></div>
+  </div>
+</div>
 <div class="container">
   <div id="mainContent">
     <div class="card">
@@ -140,11 +153,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <p style="color:#888;font-size:14px;line-height:1.8">
         Search any US or HK stock symbol to get a comprehensive technical analysis with buy/sell signals.<br><br>
         <strong style="color:#ccc">Features:</strong><br>
-        • <strong>15 Technical Indicators</strong> — SMA, EMA, RSI, MACD, Bollinger Bands, Stochastic, ADX, OBV, Parabolic SAR, Williams %R, CCI, ATR, VWAP, Money Flow Index<br>
-        • <strong>CFA-Aligned Signals</strong> — Moving average crossovers, momentum divergence, mean reversion, volume confirmation, trend strength<br>
-        • <strong>Composite Score</strong> — Weighted signal aggregation with Buy/Sell/Neutral rating<br>
-        • <strong>Fundamental Analysis</strong> — Business Quality, Balance Sheet, Cash Flow, Valuation scoring<br>
-        • <strong>Market Scanner</strong> — Scan popular stocks for strongest buy/sell signals<br><br>
+        â€¢ <strong>15 Technical Indicators</strong> â€” SMA, EMA, RSI, MACD, Bollinger Bands, Stochastic, ADX, OBV, Parabolic SAR, Williams %R, CCI, ATR, VWAP, Money Flow Index<br>
+        â€¢ <strong>CFA-Aligned Signals</strong> â€” Moving average crossovers, momentum divergence, mean reversion, volume confirmation, trend strength<br>
+        â€¢ <strong>Composite Score</strong> â€” Weighted signal aggregation with Buy/Sell/Neutral rating<br>
+        â€¢ <strong>Fundamental Analysis</strong> â€” Business Quality, Balance Sheet, Cash Flow, Valuation scoring<br>
+        â€¢ <strong>Market Scanner</strong> â€” Scan popular stocks for strongest buy/sell signals<br><br>
         <strong style="color:#ccc">Try:</strong> AAPL, MSFT, GOOGL, TSLA, NVDA, AMZN (US) | 0700.HK, 9988.HK, 1299.HK, 0005.HK, 0388.HK (HK)
       </p>
     </div>
@@ -159,28 +172,28 @@ const FINNHUB_KEY = 'd75u2o1r01qm4b7s7bi0d75u2o1r01qm4b7s7big';
 const FINNHUB_BASE = 'https://finnhub.io/api/v1';
 
 const INDICATOR_INFO = {
-  'SMA 20/50': '📋 What: The average price over the last 20 days vs 50 days.\n💡 Why it matters: Like a speedometer for short-term trends. When the 20-day line crosses ABOVE the 50-day line (called a "Golden Cross"), the stock is gaining upward momentum — a Buy signal. When it crosses BELOW ("Death Cross"), momentum is fading — a Sell signal.\n🎯 Action: Look for Golden Cross as buy entry, Death Cross as sell warning.',
-  'SMA 50/200': '📋 What: The average price over 50 days vs 200 days — the most watched indicator by professionals.\n💡 Why it matters: This is like checking the overall weather pattern, not just today\'s forecast. A Golden Cross (50-day above 200-day) has historically been one of the most reliable long-term Buy signals. Death Cross is a strong Sell signal.\n🎯 Action: This is your "big picture" compass. Don\'t fight it — if Death Cross, be very cautious.',
-  'EMA 12/26': '📋 What: Similar to SMA but reacts faster to recent price changes. Think of it as SMA with a turbo button.\n💡 Why it matters: Because it weighs recent prices more heavily, it catches trend changes earlier than SMA. When EMA12 crosses above EMA26, short-term momentum is turning bullish.\n🎯 Action: Use this for timing your entry/exit. It signals faster than SMA but can give false signals in choppy markets.',
-  'RSI (14)': '📋 What: A score from 0-100 showing if a stock is "too hot" or "too cold". Think of it like a price thermostat.\n💡 Why it matters: Above 70 = overbought (stock rose too fast, may pull back). Below 30 = oversold (stock fell too much, may bounce back). Between 40-60 is the "comfort zone".\n🎯 Action: Buy when RSI is below 30 (oversold bargain). Sell/take profit when RSI is above 70 (overheated). Be careful — strong stocks can STAY overbought for weeks.',
-  'MACD': '📋 What: The "trend detective" — shows both the direction AND strength of a trend using two lines and a histogram.\n💡 Why it matters: When the MACD line (blue) crosses above the signal line (orange), buyers are taking control — Buy signal. The histogram bars show momentum growing (taller bars) or fading (shrinking bars).\n🎯 Action: Buy on upward crossover with growing histogram. Sell on downward crossover. Zero line crossover confirms trend change.',
-  'Bollinger Bands': '📋 What: Three lines that form a "price envelope" around the stock. The middle line is the average, upper/lower bands are 2 standard deviations away.\n💡 Why it matters: Think of it like a highway with guardrails. Price normally stays within the bands. When price touches the UPPER band, the stock may be overextended (expensive). Touching the LOWER band suggests it\'s cheap.\n🎯 Action: Buy near lower band, sell near upper band. Squeeze (bands narrowing) means a big move is coming soon.',
-  'Stochastic %K/%D': '📋 What: Shows where the current price sits within its recent range. Like grading on a curve — is today\'s price near the top or bottom of recent prices?\n💡 Why it matters: Above 80 means the stock is near its recent high (could be overbought). Below 20 means near its recent low (could be oversold). The %K/%D crossover is the trigger signal.\n🎯 Action: Buy when %K crosses above %D while both are below 20. Sell when %K crosses below %D while both are above 80.',
-  'ADX': '📋 What: Measures HOW STRONG a trend is, regardless of direction. Like measuring wind speed without caring which way it blows.\n💡 Why it matters: Above 25 = strong trend (good for trend-following). Below 20 = weak/choppy market (avoid trading or use range strategies). This tells you WHETHER to trade, not which direction.\n🎯 Action: Only use trend-following signals (like SMA crossovers) when ADX > 25. When ADX < 20, the market is sideways — wait or use different strategies.',
-  'OBV': '📋 What: Tracks the "smart money" by adding volume on up-days and subtracting on down-days. Rising OBV = more buying pressure.\n💡 Why it matters: Price can lie, but volume doesn\'t. If price is rising but OBV is falling, the rally lacks real buying support — it\'s a warning sign. If OBV rises while price is flat, smart money may be accumulating before a breakout.\n🎯 Action: Confirm price moves with OBV. Rising price + rising OBV = healthy. Rising price + falling OBV = suspicious (consider taking profits).',
-  'Parabolic SAR': '📋 What: Dots placed above or below the price candlesticks. Think of it as trailing guide rails.\n💡 Why it matters: Dots BELOW the price = uptrend is intact (hold your position). Dots ABOVE = downtrend (time to sell or short). The dots act as dynamic stop-loss levels.\n🎯 Action: Simple rule — buy when dots flip below price, sell when dots flip above. Move your stop-loss to the most recent dot level.',
-  'Williams %R': '📋 What: Similar to Stochastic but inverted. Ranges from -100 (oversold) to 0 (overbought). Think of it as a "discount meter".\n💡 Why it matters: Readings between -20 and 0 suggest the stock is overbought (expensive). Between -80 and -100 suggests oversold (discounted). It\'s fast-reacting and good for timing.\n🎯 Action: Buy signals when Williams %R drops below -80 then rises back above. Sell when it rises above -20 then drops below.',
-  'CCI': '📋 What: Measures how far the current price has deviated from its statistical average. Like measuring if today\'s temperature is unusually hot or cold.\n💡 Why it matters: Above +100 = unusually high (overbought). Below -100 = unusually low (oversold). Can stay at extremes during strong trends.\n🎯 Action: In range-bound markets, buy below -100 and sell above +100. In trending markets, use CCI > +100 as trend confirmation.',
-  'ATR': '📋 What: Measures how much a stock typically moves per day. Like checking the "wave height" before surfing.\n💡 Why it matters: High ATR = big daily swings (volatile, risky but opportunity-rich). Low ATR = calm, predictable movement. Use it to set realistic expectations and stop-loss distances.\n🎯 Action: Set your stop-loss at 1.5-2x ATR from your entry price. If ATR is $3, set stop-loss $4.50-$6 away. Don\'t use ATR alone for buy/sell decisions.',
-  'VWAP': '📋 What: The average price weighted by volume — what the "average" buyer actually paid today. Institutional traders use this as their benchmark.\n💡 Why it matters: If price is ABOVE VWAP, buyers are in control (bullish). Below VWAP, sellers dominate (bearish). Institutions often buy below VWAP and sell above it.\n🎯 Action: For day trading — buy when price crosses above VWAP. For swing trading — stocks above VWAP have institutional support.',
-  'MFI': '📋 What: Like RSI but includes volume. It measures buying vs selling pressure with money flow. Think of it as RSI that also counts how many people are buying.\n💡 Why it matters: Above 80 = too much money flowing in (overbought). Below 20 = money flowing out (oversold). Because it includes volume, it\'s more reliable than RSI alone.\n🎯 Action: Buy when MFI crosses above 20 from oversold. Sell when MFI crosses below 80 from overbought. Divergence between MFI and price is a powerful reversal signal.'
+  'SMA 20/50': 'ðŸ“‹ What: The average price over the last 20 days vs 50 days.\nðŸ’¡ Why it matters: Like a speedometer for short-term trends. When the 20-day line crosses ABOVE the 50-day line (called a "Golden Cross"), the stock is gaining upward momentum â€” a Buy signal. When it crosses BELOW ("Death Cross"), momentum is fading â€” a Sell signal.\nðŸŽ¯ Action: Look for Golden Cross as buy entry, Death Cross as sell warning.',
+  'SMA 50/200': 'ðŸ“‹ What: The average price over 50 days vs 200 days â€” the most watched indicator by professionals.\nðŸ’¡ Why it matters: This is like checking the overall weather pattern, not just today\'s forecast. A Golden Cross (50-day above 200-day) has historically been one of the most reliable long-term Buy signals. Death Cross is a strong Sell signal.\nðŸŽ¯ Action: This is your "big picture" compass. Don\'t fight it â€” if Death Cross, be very cautious.',
+  'EMA 12/26': 'ðŸ“‹ What: Similar to SMA but reacts faster to recent price changes. Think of it as SMA with a turbo button.\nðŸ’¡ Why it matters: Because it weighs recent prices more heavily, it catches trend changes earlier than SMA. When EMA12 crosses above EMA26, short-term momentum is turning bullish.\nðŸŽ¯ Action: Use this for timing your entry/exit. It signals faster than SMA but can give false signals in choppy markets.',
+  'RSI (14)': 'ðŸ“‹ What: A score from 0-100 showing if a stock is "too hot" or "too cold". Think of it like a price thermostat.\nðŸ’¡ Why it matters: Above 70 = overbought (stock rose too fast, may pull back). Below 30 = oversold (stock fell too much, may bounce back). Between 40-60 is the "comfort zone".\nðŸŽ¯ Action: Buy when RSI is below 30 (oversold bargain). Sell/take profit when RSI is above 70 (overheated). Be careful â€” strong stocks can STAY overbought for weeks.',
+  'MACD': 'ðŸ“‹ What: The "trend detective" â€” shows both the direction AND strength of a trend using two lines and a histogram.\nðŸ’¡ Why it matters: When the MACD line (blue) crosses above the signal line (orange), buyers are taking control â€” Buy signal. The histogram bars show momentum growing (taller bars) or fading (shrinking bars).\nðŸŽ¯ Action: Buy on upward crossover with growing histogram. Sell on downward crossover. Zero line crossover confirms trend change.',
+  'Bollinger Bands': 'ðŸ“‹ What: Three lines that form a "price envelope" around the stock. The middle line is the average, upper/lower bands are 2 standard deviations away.\nðŸ’¡ Why it matters: Think of it like a highway with guardrails. Price normally stays within the bands. When price touches the UPPER band, the stock may be overextended (expensive). Touching the LOWER band suggests it\'s cheap.\nðŸŽ¯ Action: Buy near lower band, sell near upper band. Squeeze (bands narrowing) means a big move is coming soon.',
+  'Stochastic %K/%D': 'ðŸ“‹ What: Shows where the current price sits within its recent range. Like grading on a curve â€” is today\'s price near the top or bottom of recent prices?\nðŸ’¡ Why it matters: Above 80 means the stock is near its recent high (could be overbought). Below 20 means near its recent low (could be oversold). The %K/%D crossover is the trigger signal.\nðŸŽ¯ Action: Buy when %K crosses above %D while both are below 20. Sell when %K crosses below %D while both are above 80.',
+  'ADX': 'ðŸ“‹ What: Measures HOW STRONG a trend is, regardless of direction. Like measuring wind speed without caring which way it blows.\nðŸ’¡ Why it matters: Above 25 = strong trend (good for trend-following). Below 20 = weak/choppy market (avoid trading or use range strategies). This tells you WHETHER to trade, not which direction.\nðŸŽ¯ Action: Only use trend-following signals (like SMA crossovers) when ADX > 25. When ADX < 20, the market is sideways â€” wait or use different strategies.',
+  'OBV': 'ðŸ“‹ What: Tracks the "smart money" by adding volume on up-days and subtracting on down-days. Rising OBV = more buying pressure.\nðŸ’¡ Why it matters: Price can lie, but volume doesn\'t. If price is rising but OBV is falling, the rally lacks real buying support â€” it\'s a warning sign. If OBV rises while price is flat, smart money may be accumulating before a breakout.\nðŸŽ¯ Action: Confirm price moves with OBV. Rising price + rising OBV = healthy. Rising price + falling OBV = suspicious (consider taking profits).',
+  'Parabolic SAR': 'ðŸ“‹ What: Dots placed above or below the price candlesticks. Think of it as trailing guide rails.\nðŸ’¡ Why it matters: Dots BELOW the price = uptrend is intact (hold your position). Dots ABOVE = downtrend (time to sell or short). The dots act as dynamic stop-loss levels.\nðŸŽ¯ Action: Simple rule â€” buy when dots flip below price, sell when dots flip above. Move your stop-loss to the most recent dot level.',
+  'Williams %R': 'ðŸ“‹ What: Similar to Stochastic but inverted. Ranges from -100 (oversold) to 0 (overbought). Think of it as a "discount meter".\nðŸ’¡ Why it matters: Readings between -20 and 0 suggest the stock is overbought (expensive). Between -80 and -100 suggests oversold (discounted). It\'s fast-reacting and good for timing.\nðŸŽ¯ Action: Buy signals when Williams %R drops below -80 then rises back above. Sell when it rises above -20 then drops below.',
+  'CCI': 'ðŸ“‹ What: Measures how far the current price has deviated from its statistical average. Like measuring if today\'s temperature is unusually hot or cold.\nðŸ’¡ Why it matters: Above +100 = unusually high (overbought). Below -100 = unusually low (oversold). Can stay at extremes during strong trends.\nðŸŽ¯ Action: In range-bound markets, buy below -100 and sell above +100. In trending markets, use CCI > +100 as trend confirmation.',
+  'ATR': 'ðŸ“‹ What: Measures how much a stock typically moves per day. Like checking the "wave height" before surfing.\nðŸ’¡ Why it matters: High ATR = big daily swings (volatile, risky but opportunity-rich). Low ATR = calm, predictable movement. Use it to set realistic expectations and stop-loss distances.\nðŸŽ¯ Action: Set your stop-loss at 1.5-2x ATR from your entry price. If ATR is $3, set stop-loss $4.50-$6 away. Don\'t use ATR alone for buy/sell decisions.',
+  'VWAP': 'ðŸ“‹ What: The average price weighted by volume â€” what the "average" buyer actually paid today. Institutional traders use this as their benchmark.\nðŸ’¡ Why it matters: If price is ABOVE VWAP, buyers are in control (bullish). Below VWAP, sellers dominate (bearish). Institutions often buy below VWAP and sell above it.\nðŸŽ¯ Action: For day trading â€” buy when price crosses above VWAP. For swing trading â€” stocks above VWAP have institutional support.',
+  'MFI': 'ðŸ“‹ What: Like RSI but includes volume. It measures buying vs selling pressure with money flow. Think of it as RSI that also counts how many people are buying.\nðŸ’¡ Why it matters: Above 80 = too much money flowing in (overbought). Below 20 = money flowing out (oversold). Because it includes volume, it\'s more reliable than RSI alone.\nðŸŽ¯ Action: Buy when MFI crosses above 20 from oversold. Sell when MFI crosses below 80 from overbought. Divergence between MFI and price is a powerful reversal signal.'
 };
 
 const FUNDAMENTAL_INFO = {
-  'Business Quality': '📋 What: Scores the company\'s ability to generate consistent profits.\n💡 Why it matters: A great business can survive bad management, but a bad business can\'t survive even great management. We look at profit margins, revenue growth, and return on equity.\n🎯 Action: Scores above 70 = quality business. Below 40 = concerns about long-term viability.',
-  'Balance Sheet': '📋 What: Checks if the company has too much debt and enough cash to survive tough times. Like checking someone\'s credit score before lending money.\n💡 Why it matters: Companies with low debt and plenty of cash can survive recessions, invest in growth, and even buy competitors on the cheap. High debt = bankruptcy risk.\n🎯 Action: Scores above 70 = financially healthy. Below 40 = high debt risk — be cautious, especially in rising interest rate environments.',
-  'Cash Flow': '📋 What: Tracks actual cash coming in vs going out. "Cash is king" — profits on paper don\'t matter if cash isn\'t flowing in.\n💡 Why it matters: A company can report "profits" while burning cash (through accounting tricks). Strong cash flow means the company can pay dividends, buy back shares, and invest in growth without borrowing.\n🎯 Action: Scores above 70 = strong cash generator. Below 40 = cash flow concerns — the company may need to raise money (dilute shares) or cut dividends.',
-  'Valuation': '📋 What: Determines if the stock is cheap, fairly priced, or expensive compared to its earnings and peers. Like checking if a house is fairly priced for the neighborhood.\n💡 Why it matters: Even a great company is a bad investment if you overpay. We compare P/E ratio, P/S ratio, and P/B ratio against sector averages.\n🎯 Action: Scores above 70 = potentially undervalued (good entry). Below 40 = overvalued — you may be paying too much.'
+  'Business Quality': 'ðŸ“‹ What: Scores the company\'s ability to generate consistent profits.\nðŸ’¡ Why it matters: A great business can survive bad management, but a bad business can\'t survive even great management. We look at profit margins, revenue growth, and return on equity.\nðŸŽ¯ Action: Scores above 70 = quality business. Below 40 = concerns about long-term viability.',
+  'Balance Sheet': 'ðŸ“‹ What: Checks if the company has too much debt and enough cash to survive tough times. Like checking someone\'s credit score before lending money.\nðŸ’¡ Why it matters: Companies with low debt and plenty of cash can survive recessions, invest in growth, and even buy competitors on the cheap. High debt = bankruptcy risk.\nðŸŽ¯ Action: Scores above 70 = financially healthy. Below 40 = high debt risk â€” be cautious, especially in rising interest rate environments.',
+  'Cash Flow': 'ðŸ“‹ What: Tracks actual cash coming in vs going out. "Cash is king" â€” profits on paper don\'t matter if cash isn\'t flowing in.\nðŸ’¡ Why it matters: A company can report "profits" while burning cash (through accounting tricks). Strong cash flow means the company can pay dividends, buy back shares, and invest in growth without borrowing.\nðŸŽ¯ Action: Scores above 70 = strong cash generator. Below 40 = cash flow concerns â€” the company may need to raise money (dilute shares) or cut dividends.',
+  'Valuation': 'ðŸ“‹ What: Determines if the stock is cheap, fairly priced, or expensive compared to its earnings and peers. Like checking if a house is fairly priced for the neighborhood.\nðŸ’¡ Why it matters: Even a great company is a bad investment if you overpay. We compare P/E ratio, P/S ratio, and P/B ratio against sector averages.\nðŸŽ¯ Action: Scores above 70 = potentially undervalued (good entry). Below 40 = overvalued â€” you may be paying too much.'
 };
 
 const INDICATORS = [
@@ -194,31 +207,19 @@ const INDICATORS = [
 const HK_WATCHLIST = ['0700.HK','9988.HK','1299.HK','0005.HK','0388.HK','0001.HK','0002.HK','0003.HK','0016.HK','0011.HK','0012.HK','0017.HK','0027.HK','0066.HK','0101.HK','0175.HK','0241.HK','0267.HK','0288.HK','0386.HK','0669.HK','0688.HK','0762.HK','0823.HK','0883.HK','0939.HK','0941.HK','0960.HK','0968.HK','1038.HK','1044.HK','1088.HK','1109.HK','1113.HK','1177.HK','1211.HK','1288.HK','1398.HK','1810.HK','1876.HK','1928.HK','1997.HK','2007.HK','2018.HK','2020.HK','2269.HK','2313.HK','2318.HK','2382.HK','2388.HK','2628.HK','2688.HK','2899.HK','3988.HK','6862.HK','9618.HK','9633.HK','9999.HK','0981.HK','1093.HK','2331.HK','3690.HK','6618.HK','6690.HK','9626.HK','9888.HK','9961.HK','2208.HK','1766.HK','1919.HK','1801.HK','3320.HK','1171.HK','0268.HK','0384.HK','0171.HK','0988.HK','0151.HK','0969.HK','8191.HK','2038.HK','6060.HK','6160.HK','6981.HK','0979.HK','0989.HK','0023.HK','0083.HK','0425.HK','0606.HK','0661.HK','0709.HK','0772.HK','460.HK'];
 const US_WATCHLIST = ['AAPL','MSFT','GOOGL','AMZN','NVDA','META','TSLA','BRK-B','JPM','V','JNJ','WMT','PG','MA','HD','UNH','DIS','PYPL','INTC','NFLX','AMD','CRM','COST','TMO','ABT','MRK','PFE','T','VZ','KO','PEP','BA','GS','MS','C','WFC','AXP','BLK','SCHW','SPGI','ICE','CME','CB','NDAQ','ABBV','BMY','LLY','MRNA','GILD','AMGN','VRTX','REGN','ISRG','SYK','DXCM','BSX','ZTS','CVS','CI','HUM','CVS','MCK','GOOG','ADBE','ORCL','CRM','NOW','INTU','SNPS','CDNS','PANW','FTNT','MNST','ANET','EQIX','PLTR','SNOW','NET','DDOG','CRWD','ZS','ABNB','SQ','COIN','SHOP','SE','MELI','NKE','DECK','TGT','LOW','TJX','ROST','DLTR','BKNG','MAR','HLT','XOM','CVX','COP','SLB','EOG','OXY','VLO','MPC','PSX','WMB','CAT','DE','UNP','HON','GE','LMT','RTX','NOC','EMR','ETN','PCAR','FDX','UPS','CSX','NSC','DAL','UAL','AAL','LUV','CARR','OTIS','NUE','SHW','LIN','APD','ECL','FCX','NEE','DUK','SO','D','AEP','SRE','XEL'];
 
-const HK_NAMES_CN = {'0700.HK':'腾讯控股','9988.HK':'阿里巴巴','1299.HK':'友邦保险','0005.HK':'汇丰控股','0388.HK':'港交所','0001.HK':'长和','0002.HK':'中电控股','0003.HK':'香港中华煤气','0016.HK':'新鸿基地产','0011.HK':'恒生银行','0012.HK':'恒基发展','0017.HK':'新世界发展','0027.HK':'银河娱乐','0066.HK':'港铁公司','0101.HK':'恒隆地产','0175.HK':'吉利汽车','0241.HK':'阿里健康','0267.HK':'中信股份','0288.HK':'万洲国际','0386.HK':'中国石化','0669.HK':'创科实业','0688.HK':'中国海外发展','0762.HK':'中国联通','0823.HK':'领展房产','0883.HK':'中海油','0939.HK':'建设银行','0941.HK':'中国移动','0960.HK':'龙光集团','0968.HK':'信义光能','1038.HK':'长江基建','1044.HK':'恒安国际','1088.HK':'中国神华','1109.HK':'华润置地','1113.HK':'长实集团','1177.HK':'中国生物制药','1211.HK':'比亚迪','1288.HK':'农业银行','1398.HK':'工商银行','1810.HK':'小米集团','1876.HK':'百威亚太','1928.HK':'金沙中国','1997.HK':'九龙仓置业','2007.HK':'碧桂园','2018.HK':'瑞声科技','2020.HK':'安踏体育','2269.HK':'药明生物','2313.HK':'申洲国际','2318.HK':'中国平安','2382.HK':'舜宇光学','2388.HK':'中银香港','2628.HK':'中国人寿','2688.HK':'新奥能源','2899.HK':'紫金矿业','3988.HK':'中国银行','6862.HK':'海底捞','9618.HK':'京东集团','9633.HK':'农夫山泉','9999.HK':'网易','0981.HK':'中芯国际','1093.HK':'石药集团','2331.HK':'李宁','3690.HK':'美团','6618.HK':'京东健康','6690.HK':'海尔智家','9626.HK':'哔哩哔哩','9888.HK':'百度集团','9961.HK':'携程集团','2208.HK':'金龙鱼','1766.HK':'中国中车','1919.HK':'中远海控','1801.HK':'中国交通建设','3320.HK':'中国太保','1171.HK':'兖矿能源','0268.HK':'金蝶国际','0384.HK':'中国燃气','0171.HK':'银娱','0988.HK':'中国银行','0151.HK':'中国旺旺','0969.HK':'信义玻璃','8191.HK':'天齐锂业','2038.HK':'富士康','6060.HK':'众安在线','6160.HK':'百济神州','6981.HK':'宇华教育','0023.HK':'东亚银行','0083.HK':'信和置业','0425.HK':'敏华控股','0606.HK':'嘉里物流','0661.HK':'时代电气','0709.HK':'华住集团','0772.HK':'阅文集团','0979.HK':'格林酒店','0989.HK':'润地'};
+const HK_NAMES_CN = {'0700.HK':'è…¾è®¯æŽ§è‚¡','9988.HK':'é˜¿é‡Œå·´å·´','1299.HK':'å‹é‚¦ä¿é™©','0005.HK':'æ±‡ä¸°æŽ§è‚¡','0388.HK':'æ¸¯äº¤æ‰€','0001.HK':'é•¿å’Œ','0002.HK':'ä¸­ç”µæŽ§è‚¡','0003.HK':'é¦™æ¸¯ä¸­åŽç…¤æ°”','0016.HK':'æ–°é¸¿åŸºåœ°äº§','0011.HK':'æ’ç”Ÿé“¶è¡Œ','0012.HK':'æ’åŸºå‘å±•','0017.HK':'æ–°ä¸–ç•Œå‘å±•','0027.HK':'é“¶æ²³å¨±ä¹','0066.HK':'æ¸¯é“å…¬å¸','0101.HK':'æ’éš†åœ°äº§','0175.HK':'å‰åˆ©æ±½è½¦','0241.HK':'é˜¿é‡Œå¥åº·','0267.HK':'ä¸­ä¿¡è‚¡ä»½','0288.HK':'ä¸‡æ´²å›½é™…','0386.HK':'ä¸­å›½çŸ³åŒ–','0669.HK':'åˆ›ç§‘å®žä¸š','0688.HK':'ä¸­å›½æµ·å¤–å‘å±•','0762.HK':'ä¸­å›½è”é€š','0823.HK':'é¢†å±•æˆ¿äº§','0883.HK':'ä¸­æµ·æ²¹','0939.HK':'å»ºè®¾é“¶è¡Œ','0941.HK':'ä¸­å›½ç§»åŠ¨','0960.HK':'é¾™å…‰é›†å›¢','0968.HK':'ä¿¡ä¹‰å…‰èƒ½','1038.HK':'é•¿æ±ŸåŸºå»º','1044.HK':'æ’å®‰å›½é™…','1088.HK':'ä¸­å›½ç¥žåŽ','1109.HK':'åŽæ¶¦ç½®åœ°','1113.HK':'é•¿å®žé›†å›¢','1177.HK':'ä¸­å›½ç”Ÿç‰©åˆ¶è¯','1211.HK':'æ¯”äºšè¿ª','1288.HK':'å†œä¸šé“¶è¡Œ','1398.HK':'å·¥å•†é“¶è¡Œ','1810.HK':'å°ç±³é›†å›¢','1876.HK':'ç™¾å¨äºšå¤ª','1928.HK':'é‡‘æ²™ä¸­å›½','1997.HK':'ä¹é¾™ä»“ç½®ä¸š','2007.HK':'ç¢§æ¡‚å›­','2018.HK':'ç‘žå£°ç§‘æŠ€','2020.HK':'å®‰è¸ä½“è‚²','2269.HK':'è¯æ˜Žç”Ÿç‰©','2313.HK':'ç”³æ´²å›½é™…','2318.HK':'ä¸­å›½å¹³å®‰','2382.HK':'èˆœå®‡å…‰å­¦','2388.HK':'ä¸­é“¶é¦™æ¸¯','2628.HK':'ä¸­å›½äººå¯¿','2688.HK':'æ–°å¥¥èƒ½æº','2899.HK':'ç´«é‡‘çŸ¿ä¸š','3988.HK':'ä¸­å›½é“¶è¡Œ','6862.HK':'æµ·åº•æž','9618.HK':'äº¬ä¸œé›†å›¢','9633.HK':'å†œå¤«å±±æ³‰','9999.HK':'ç½‘æ˜“','0981.HK':'ä¸­èŠ¯å›½é™…','1093.HK':'çŸ³è¯é›†å›¢','2331.HK':'æŽå®','3690.HK':'ç¾Žå›¢','6618.HK':'äº¬ä¸œå¥åº·','6690.HK':'æµ·å°”æ™ºå®¶','9626.HK':'å“”å“©å“”å“©','9888.HK':'ç™¾åº¦é›†å›¢','9961.HK':'æºç¨‹é›†å›¢','2208.HK':'é‡‘é¾™é±¼','1766.HK':'ä¸­å›½ä¸­è½¦','1919.HK':'ä¸­è¿œæµ·æŽ§','1801.HK':'ä¸­å›½äº¤é€šå»ºè®¾','3320.HK':'ä¸­å›½å¤ªä¿','1171.HK':'å…–çŸ¿èƒ½æº','0268.HK':'é‡‘è¶å›½é™…','0384.HK':'ä¸­å›½ç‡ƒæ°”','0171.HK':'é“¶å¨±','0988.HK':'ä¸­å›½é“¶è¡Œ','0151.HK':'ä¸­å›½æ—ºæ—º','0969.HK':'ä¿¡ä¹‰çŽ»ç’ƒ','8191.HK':'å¤©é½é”‚ä¸š','2038.HK':'å¯Œå£«åº·','6060.HK':'ä¼—å®‰åœ¨çº¿','6160.HK':'ç™¾æµŽç¥žå·ž','6981.HK':'å®‡åŽæ•™è‚²','0023.HK':'ä¸œäºšé“¶è¡Œ','0083.HK':'ä¿¡å’Œç½®ä¸š','0425.HK':'æ•åŽæŽ§è‚¡','0606.HK':'å˜‰é‡Œç‰©æµ','0661.HK':'æ—¶ä»£ç”µæ°”','0709.HK':'åŽä½é›†å›¢','0772.HK':'é˜…æ–‡é›†å›¢','0979.HK':'æ ¼æž—é…’åº—','0989.HK':'æ¶¦åœ°'};
 
-// ===== TOOLTIP =====
-function showTooltip(key, type, el) {
-  const info = type === 'fund' ? FUNDAMENTAL_INFO[key] : INDICATOR_INFO[key];
-  if (!info) return;
-  const tooltip = document.getElementById('infoTooltip');
-  const overlay = document.getElementById('tooltipOverlay');
-  const content = document.getElementById('tooltipContent');
-  content.innerHTML = '<strong style="color:#fff">' + key + '</strong><br><br>' + info.replace(/\n/g, '<br>');
-  tooltip.classList.add('show');
-  overlay.classList.add('show');
-  // Position near the element
-  const rect = el.getBoundingClientRect();
-  let top = rect.bottom + 8;
-  let left = Math.max(10, rect.left - 20);
-  if (top + 150 > window.innerHeight) top = Math.max(10, rect.top - 150);
-  if (left + 320 > window.innerWidth) left = Math.max(10, window.innerWidth - 330);
-  tooltip.style.top = top + 'px';
-  tooltip.style.left = left + 'px';
+// ===== INDICATOR MODAL =====
+function showIndicatorInfo(name) {
+  const info = INDICATOR_INFO[name] || FUNDAMENTAL_INFO[name] || 'No information available.';
+  document.getElementById('indicatorModalTitle').textContent = name;
+  document.getElementById('indicatorModalBody').innerHTML = info.replace(/\n/g, '<br>');
+  document.getElementById('indicatorModal').classList.add('show');
 }
-function closeTooltip() {
-  document.getElementById('infoTooltip').classList.remove('show');
-  document.getElementById('tooltipOverlay').classList.remove('show');
+function closeIndicatorModal() {
+  document.getElementById('indicatorModal').classList.remove('show');
 }
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeIndicatorModal(); });
 
 // ===== OFFLINE MODE =====
 const CACHE_KEY = 'stockAnalyzer_cache';
@@ -238,7 +239,7 @@ async function checkConnectivity() {
 
 function showCachedBanner(ts) {
   const d = new Date(ts);
-  return '<div class="cached-banner">⚠️ Offline mode — showing cached data from ' + d.toLocaleString() + '</div>';
+  return '<div class="cached-banner">âš ï¸ Offline mode â€” showing cached data from ' + d.toLocaleString() + '</div>';
 }
 
 // ===== RATE LIMITER =====
@@ -626,9 +627,9 @@ function analyzeIndicator(name, data) {
       const rsiVals = rsi(data, 14);
       if (rsiVals[n] !== null) {
         const v = rsiVals[n]; result.value = v.toFixed(1);
-        if (v < 30) { result.signal = 'buy'; result.detail = 'Oversold (<30) — potential reversal up'; }
+        if (v < 30) { result.signal = 'buy'; result.detail = 'Oversold (<30) â€” potential reversal up'; }
         else if (v < 40) { result.signal = 'buy'; result.detail = 'Approaching oversold zone'; }
-        else if (v > 70) { result.signal = 'sell'; result.detail = 'Overbought (>70) — potential reversal down'; }
+        else if (v > 70) { result.signal = 'sell'; result.detail = 'Overbought (>70) â€” potential reversal down'; }
         else if (v > 60) { result.signal = 'sell'; result.detail = 'Approaching overbought zone'; }
         else { result.detail = 'Neutral zone'; }
       }
@@ -652,11 +653,11 @@ function analyzeIndicator(name, data) {
       const bb = bollingerBands(data);
       if (bb.upper[n] !== null) {
         const pct = bb.pctB[n]; result.value = pct.toFixed(3);
-        if (pct < 0) { result.signal = 'buy'; result.detail = 'Price below lower band — oversold'; }
-        else if (pct < 0.2) { result.signal = 'buy'; result.detail = 'Near lower band — approaching oversold'; }
-        else if (pct > 1) { result.signal = 'sell'; result.detail = 'Price above upper band — overbought'; }
-        else if (pct > 0.8) { result.signal = 'sell'; result.detail = 'Near upper band — approaching overbought'; }
-        else { result.detail = 'Within bands — normal range'; }
+        if (pct < 0) { result.signal = 'buy'; result.detail = 'Price below lower band â€” oversold'; }
+        else if (pct < 0.2) { result.signal = 'buy'; result.detail = 'Near lower band â€” approaching oversold'; }
+        else if (pct > 1) { result.signal = 'sell'; result.detail = 'Price above upper band â€” overbought'; }
+        else if (pct > 0.8) { result.signal = 'sell'; result.detail = 'Near upper band â€” approaching overbought'; }
+        else { result.detail = 'Within bands â€” normal range'; }
       }
       break;
     }
@@ -689,8 +690,8 @@ function analyzeIndicator(name, data) {
       if (obvVals.length >= 20) {
         const obvSma = obvVals.slice(-20).reduce((a,b) => a+b, 0) / 20;
         result.value = obvVals[n].toFixed(0);
-        if (obvVals[n] > obvSma && obvVals[n] > obvVals[n-1]) { result.signal = 'buy'; result.detail = 'OBV rising — accumulation'; }
-        else if (obvVals[n] < obvSma && obvVals[n] < obvVals[n-1]) { result.signal = 'sell'; result.detail = 'OBV falling — distribution'; }
+        if (obvVals[n] > obvSma && obvVals[n] > obvVals[n-1]) { result.signal = 'buy'; result.detail = 'OBV rising â€” accumulation'; }
+        else if (obvVals[n] < obvSma && obvVals[n] < obvVals[n-1]) { result.signal = 'sell'; result.detail = 'OBV falling â€” distribution'; }
         else { result.detail = 'OBV neutral'; }
       }
       break;
@@ -698,8 +699,8 @@ function analyzeIndicator(name, data) {
     case 'Parabolic SAR': {
       const sar = parabolicSAR(data);
       result.value = sar[n].toFixed(2);
-      if (sar[n] < c) { result.signal = 'buy'; result.detail = `SAR below price (${sar[n].toFixed(2)}) — bullish`; }
-      else { result.signal = 'sell'; result.detail = `SAR above price (${sar[n].toFixed(2)}) — bearish`; }
+      if (sar[n] < c) { result.signal = 'buy'; result.detail = `SAR below price (${sar[n].toFixed(2)}) â€” bullish`; }
+      else { result.signal = 'sell'; result.detail = `SAR above price (${sar[n].toFixed(2)}) â€” bearish`; }
       break;
     }
     case 'Williams %R': {
@@ -736,8 +737,8 @@ function analyzeIndicator(name, data) {
       const vwapVals = vwap(data);
       if (vwapVals[n] !== null) {
         result.value = vwapVals[n].toFixed(2);
-        if (c > vwapVals[n]) { result.signal = 'buy'; result.detail = 'Price above VWAP — bullish'; }
-        else { result.signal = 'sell'; result.detail = 'Price below VWAP — bearish'; }
+        if (c > vwapVals[n]) { result.signal = 'buy'; result.detail = 'Price above VWAP â€” bullish'; }
+        else { result.signal = 'sell'; result.detail = 'Price below VWAP â€” bearish'; }
       }
       break;
     }
@@ -1020,7 +1021,7 @@ function updateAutocomplete() {
   list.innerHTML = matches.map((s, i) => `
     <div class="autocomplete-item" data-index="${i}" onclick="selectAutocomplete('${s}')">
       <span class="sym">${s}</span>
-      <span class="name">${isInMyStocks(s) ? '⭐' : ''}</span>
+      <span class="name">${isInMyStocks(s) ? 'â­' : ''}</span>
     </div>
   `).join('');
   list.classList.add('show');
@@ -1081,28 +1082,28 @@ function generateReasons(signals, composite, quote) {
   const trendBuy = [sma20_50, sma50_200, ema12_26].filter(s => s && s.signal === 'buy').length;
   const trendSell = [sma20_50, sma50_200, ema12_26].filter(s => s && s.signal === 'sell').length;
 
-  if (trendBuy >= 2) reasons.push(`Strong bullish trend — ${trendBuy} of 3 moving average pairs bullish. Short-term MAs above long-term MAs indicate sustained upward momentum.`);
-  else if (trendSell >= 2) reasons.push(`Bearish trend — ${trendSell} of 3 moving average pairs bearish. Short-term MAs below long-term MAs indicate sustained downward momentum.`);
+  if (trendBuy >= 2) reasons.push(`Strong bullish trend â€” ${trendBuy} of 3 moving average pairs bullish. Short-term MAs above long-term MAs indicate sustained upward momentum.`);
+  else if (trendSell >= 2) reasons.push(`Bearish trend â€” ${trendSell} of 3 moving average pairs bearish. Short-term MAs below long-term MAs indicate sustained downward momentum.`);
 
   const rsiSig = signals.find(s => s && s.name === 'RSI (14)');
-  if (rsiSig && rsiSig.signal === 'buy') reasons.push(`RSI at ${rsiSig.value} — oversold territory, historically associated with higher probability of rebounds.`);
-  else if (rsiSig && rsiSig.signal === 'sell') reasons.push(`RSI at ${rsiSig.value} — overbought territory, suggesting the stock may be overextended.`);
+  if (rsiSig && rsiSig.signal === 'buy') reasons.push(`RSI at ${rsiSig.value} â€” oversold territory, historically associated with higher probability of rebounds.`);
+  else if (rsiSig && rsiSig.signal === 'sell') reasons.push(`RSI at ${rsiSig.value} â€” overbought territory, suggesting the stock may be overextended.`);
 
   const macdSig = signals.find(s => s && s.name === 'MACD');
-  if (macdSig && macdSig.signal === 'buy' && macdSig.detail.includes('crossed')) reasons.push('MACD crossed above signal line — bullish momentum acceleration.');
-  else if (macdSig && macdSig.signal === 'sell' && macdSig.detail.includes('crossed')) reasons.push('MACD crossed below signal line — bearish momentum signal.');
+  if (macdSig && macdSig.signal === 'buy' && macdSig.detail.includes('crossed')) reasons.push('MACD crossed above signal line â€” bullish momentum acceleration.');
+  else if (macdSig && macdSig.signal === 'sell' && macdSig.detail.includes('crossed')) reasons.push('MACD crossed below signal line â€” bearish momentum signal.');
 
   const bbSig = signals.find(s => s && s.name === 'Bollinger Bands');
-  if (bbSig && bbSig.signal === 'buy') reasons.push('Price near/below lower Bollinger Band — mean reversion signal suggesting oversold conditions.');
-  else if (bbSig && bbSig.signal === 'sell') reasons.push('Price near/above upper Bollinger Band — may be overextended relative to recent volatility.');
+  if (bbSig && bbSig.signal === 'buy') reasons.push('Price near/below lower Bollinger Band â€” mean reversion signal suggesting oversold conditions.');
+  else if (bbSig && bbSig.signal === 'sell') reasons.push('Price near/above upper Bollinger Band â€” may be overextended relative to recent volatility.');
 
   const obvSig = signals.find(s => s && s.name === 'OBV');
-  if (obvSig && obvSig.signal === 'buy') reasons.push('OBV rising — volume confirms upward price movement, suggesting genuine accumulation.');
-  else if (obvSig && obvSig.signal === 'sell') reasons.push('OBV declining — selling pressure increasing, volume not supporting the price.');
+  if (obvSig && obvSig.signal === 'buy') reasons.push('OBV rising â€” volume confirms upward price movement, suggesting genuine accumulation.');
+  else if (obvSig && obvSig.signal === 'sell') reasons.push('OBV declining â€” selling pressure increasing, volume not supporting the price.');
 
   const mfiSig = signals.find(s => s && s.name === 'MFI');
-  if (mfiSig && mfiSig.signal === 'buy') reasons.push('Money Flow Index indicates accumulation — buying pressure dominates.');
-  else if (mfiSig && mfiSig.signal === 'sell') reasons.push('Money Flow Index indicates distribution — selling pressure dominates.');
+  if (mfiSig && mfiSig.signal === 'buy') reasons.push('Money Flow Index indicates accumulation â€” buying pressure dominates.');
+  else if (mfiSig && mfiSig.signal === 'sell') reasons.push('Money Flow Index indicates distribution â€” selling pressure dominates.');
 
   if (composite.rating === 'Strong Buy' || composite.rating === 'Buy') {
     reasons.push(`Overall: ${composite.buyCount} of 15 indicators signal BUY vs ${composite.sellCount} SELL. Evidence supports bullish outlook.`);
@@ -1134,7 +1135,7 @@ function renderAnalysis(symbol, data, quoteInfo, signals, composite, fundScore, 
     const bothSell = dailyRating.includes('Sell') && wRating.includes('Sell');
     weeklyConfirms = bothBuy || bothSell;
     const agrees = weeklyConfirms || (dailyRating === 'Neutral' && wRating === 'Neutral');
-    weeklyHtml = `<div class="weekly-confirm">${agrees ? '✅' : '⚠️'} Weekly Confirmation: ${agrees ? 'Weekly confirms ' + dailyRating : 'Weekly disagrees (' + wRating + ')'}</div>`;
+    weeklyHtml = `<div class="weekly-confirm">${agrees ? 'âœ…' : 'âš ï¸'} Weekly Confirmation: ${agrees ? 'Weekly confirms ' + dailyRating : 'Weekly disagrees (' + wRating + ')'}</div>`;
   }
 
   // Confidence scoring
@@ -1166,19 +1167,19 @@ function renderAnalysis(symbol, data, quoteInfo, signals, composite, fundScore, 
   };
 
   document.getElementById('mainContent').innerHTML = `
-    <button class="back-btn" onclick="goBack()">← Back</button>
-    <button class="back-btn" onclick="toggleMyStocks('${symbol}')" style="margin-left:8px;${isSaved ? 'color:#fbbf24;border-color:#fbbf24' : ''}">${isSaved ? '★ Saved' : '☆ Save'}</button>
+    <button class="back-btn" onclick="goBack()">â† Back</button>
+    <button class="back-btn" onclick="toggleMyStocks('${symbol}')" style="margin-left:8px;${isSaved ? 'color:#fbbf24;border-color:#fbbf24' : ''}">${isSaved ? 'â˜… Saved' : 'â˜† Save'}</button>
 
     <div class="card" style="margin-bottom:16px">
       <div class="card-title">
         <div>
           <div style="font-size:22px;font-weight:800;color:#fff">${quoteInfo.name || symbol}</div>
-          <div style="font-size:13px;color:#666;margin-top:2px">${symbol}${quoteInfo.exchange ? ' • ' + quoteInfo.exchange : ''}</div>
+          <div style="font-size:13px;color:#666;margin-top:2px">${symbol}${quoteInfo.exchange ? ' â€¢ ' + quoteInfo.exchange : ''}</div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <span class="${composite.ratingClass}" style="font-size:16px;padding:6px 16px">📊 Technical: ${composite.rating}</span>
+          <span class="${composite.ratingClass}" style="font-size:16px;padding:6px 16px">ðŸ“Š Technical: ${composite.rating}</span>
           <span class="confidence-badge ${confClass}">Confidence: ${confidence}%</span>
-          ${fundScore ? `<span class="${fundScore.total >= 75 ? 'badge-buy' : fundScore.total >= 50 ? 'badge-neutral' : 'badge-sell'}" style="font-size:16px;padding:6px 16px">📈 Fundamental: ${fundScore.verdict} (${fundScore.total}/100)</span>` : ''}
+          ${fundScore ? `<span class="${fundScore.total >= 75 ? 'badge-buy' : fundScore.total >= 50 ? 'badge-neutral' : 'badge-sell'}" style="font-size:16px;padding:6px 16px">ðŸ“ˆ Fundamental: ${fundScore.verdict} (${fundScore.total}/100)</span>` : ''}
         </div>
       </div>
       ${quoteInfo.industry ? `<div style="font-size:12px;color:#555;margin-bottom:8px">${quoteInfo.industry || ''}</div>` : ''}
@@ -1206,20 +1207,20 @@ function renderAnalysis(symbol, data, quoteInfo, signals, composite, fundScore, 
         ${quoteInfo.dividendYield ? `<div class="ov-item"><div class="label">Div Yield</div><div class="val">${(quoteInfo.dividendYield*100).toFixed(2)}%</div></div>` : ''}
         ${quoteInfo.beta !== null ? `<div class="ov-item"><div class="label">Beta</div><div class="val">${quoteInfo.beta.toFixed(2)}</div></div>` : ''}
       </div>
-      <div style="margin-top:12px;font-size:11px;color:#555">Data: ${data[0].date.toLocaleDateString()} → ${data[data.length-1].date.toLocaleDateString()}</div>
+      <div style="margin-top:12px;font-size:11px;color:#555">Data: ${data[0].date.toLocaleDateString()} â†’ ${data[data.length-1].date.toLocaleDateString()}</div>
     </div>
 
     ${weeklyHtml}
     <div id="industryComparison" style="margin-bottom:16px"></div>
     <script>loadIndustryComparison('${symbol}', '${quoteInfo.industry || ''}');</script>
     <div class="card" style="margin-bottom:16px">
-      <div class="card-title">📈 Technical Indicators & Signals</div>
+      <div class="card-title">ðŸ“ˆ Technical Indicators & Signals</div>
       <div class="signal-grid">
         ${signals.filter(s => s).map(s => `
           <div class="signal-item">
-            <div class="name">${s.name} <span class="info-icon" onclick="event.stopPropagation();showTooltip('${s.name}','tech',this)">ℹ️</span></div>
-            <div class="val">${s.value || '—'}</div>
-            <div class="sig sig-${s.signal}">${s.signal === 'buy' ? '▲ BUY' : s.signal === 'sell' ? '▼ SELL' : '● NEUTRAL'}</div>
+            <div class="name">${s.name} <span class="info-icon" onclick="event.stopPropagation();showIndicatorInfo('${s.name}')">â„¹ï¸</span></div>
+            <div class="val">${s.value || 'â€”'}</div>
+            <div class="sig sig-${s.signal}">${s.signal === 'buy' ? 'â–² BUY' : s.signal === 'sell' ? 'â–¼ SELL' : 'â— NEUTRAL'}</div>
             <div style="font-size:10px;color:#666;margin-top:2px">${s.detail}</div>
           </div>
         `).join('')}
@@ -1228,13 +1229,13 @@ function renderAnalysis(symbol, data, quoteInfo, signals, composite, fundScore, 
 
     ${fundScore ? `
     <div class="card" style="margin-bottom:16px">
-      <div class="card-title">📈 Fundamental Analysis <span style="font-size:12px;color:#888;font-weight:400">Confidence: ${fundScore.confidence}</span></div>
+      <div class="card-title">ðŸ“ˆ Fundamental Analysis <span style="font-size:12px;color:#888;font-weight:400">Confidence: ${fundScore.confidence}</span></div>
 
       <div style="margin-bottom:16px">
         <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:8px">Quick Screen: ${fundScore.quickScreen.passes}/${fundScore.quickScreen.total} Passed</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
           ${fundScore.quickScreen.checks.map(ch => `
-            <span style="font-size:11px;padding:3px 8px;border-radius:4px;${ch.pass ? 'background:#1a3a2a;color:#4ade80' : 'background:#3a1a1a;color:#f87171'}">${ch.pass ? '✓' : '✗'} ${ch.name}: ${ch.detail}</span>
+            <span style="font-size:11px;padding:3px 8px;border-radius:4px;${ch.pass ? 'background:#1a3a2a;color:#4ade80' : 'background:#3a1a1a;color:#f87171'}">${ch.pass ? 'âœ“' : 'âœ—'} ${ch.name}: ${ch.detail}</span>
           `).join('')}
         </div>
       </div>
@@ -1249,7 +1250,7 @@ function renderAnalysis(symbol, data, quoteInfo, signals, composite, fundScore, 
         ].map(b => `
           <div style="background:#15171f;border-radius:8px;padding:12px">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-              <span style="font-size:12px;color:#888">${b.label}${FUNDAMENTAL_INFO[b.label] ? ` <span class="info-icon" onclick="event.stopPropagation();showTooltip('${b.label}','fund',this)">ℹ️</span>` : ''}</span>
+              <span style="font-size:12px;color:#888">${b.label}${FUNDAMENTAL_INFO[b.label] ? ` <span class="info-icon" onclick="event.stopPropagation();showIndicatorInfo('${b.label}')">â„¹ï¸</span>` : ''}</span>
               <span style="font-size:14px;font-weight:700;color:${b.color}">${b.data.score}/${b.data.max}</span>
             </div>
             <div style="background:#252836;border-radius:4px;height:6px;overflow:hidden">
@@ -1261,15 +1262,15 @@ function renderAnalysis(symbol, data, quoteInfo, signals, composite, fundScore, 
       </div>
 
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
-        ${fundScore.strengths.map(s => `<span style="font-size:11px;background:#1a3a2a;color:#4ade80;padding:3px 10px;border-radius:4px">✓ ${s}</span>`).join('')}
-        ${fundScore.redFlags.map(f => `<span style="font-size:11px;background:#3a1a1a;color:#f87171;padding:3px 10px;border-radius:4px">⚠ ${f}</span>`).join('')}
+        ${fundScore.strengths.map(s => `<span style="font-size:11px;background:#1a3a2a;color:#4ade80;padding:3px 10px;border-radius:4px">âœ“ ${s}</span>`).join('')}
+        ${fundScore.redFlags.map(f => `<span style="font-size:11px;background:#3a1a1a;color:#f87171;padding:3px 10px;border-radius:4px">âš  ${f}</span>`).join('')}
       </div>
-      <div style="font-size:12px;color:#555;font-style:italic">Scores are informational only — not investment advice.</div>
+      <div style="font-size:12px;color:#555;font-style:italic">Scores are informational only â€” not investment advice.</div>
     </div>
     ` : ''}
 
     <div class="card">
-      <div class="card-title">📋 Rating Reasons</div>
+      <div class="card-title">ðŸ“‹ Rating Reasons</div>
       <div class="reasons">
         <ul style="padding-left:18px">
           ${reasons.map(r => `<li>${r}</li>`).join('')}
@@ -1304,16 +1305,16 @@ function showWelcome() {
       <p style="color:#888;font-size:14px;line-height:1.8">
         Search any US or HK stock symbol to get comprehensive analysis.<br><br>
         <strong style="color:#ccc">Features:</strong><br>
-        • <strong>15 Technical Indicators</strong> — SMA, EMA, RSI, MACD, Bollinger Bands, and more<br>
-        • <strong>Fundamental Analysis</strong> — Business Quality, Balance Sheet, Cash Flow, Valuation<br>
-        • <strong>Composite Score</strong> — Weighted signal aggregation with confidence<br>
-        • <strong>Market Scanner & Screener</strong> — Find opportunities<br><br>
+        â€¢ <strong>15 Technical Indicators</strong> â€” SMA, EMA, RSI, MACD, Bollinger Bands, and more<br>
+        â€¢ <strong>Fundamental Analysis</strong> â€” Business Quality, Balance Sheet, Cash Flow, Valuation<br>
+        â€¢ <strong>Composite Score</strong> â€” Weighted signal aggregation with confidence<br>
+        â€¢ <strong>Market Scanner & Screener</strong> â€” Find opportunities<br><br>
         <strong style="color:#ccc">Try:</strong> AAPL, MSFT, GOOGL (US) | 0700.HK, 9988.HK, 1299.HK (HK)
       </p>
-      <div style="margin-top:16px;text-align:center"><button class="quick-scan-btn" onclick="quickScan()">⚡ Quick Scan ${lastMarket === 'HK' ? '🇭🇰 HK' : '🇺🇸 US'} Market</button></div>
+      <div style="margin-top:16px;text-align:center"><button class="quick-scan-btn" onclick="quickScan()">âš¡ Quick Scan ${lastMarket === 'HK' ? 'ðŸ‡­ðŸ‡° HK' : 'ðŸ‡ºðŸ‡¸ US'} Market</button></div>
       ${myStocks.length > 0 ? `
       <div style="margin-top:16px;padding-top:16px;border-top:1px solid #2a2d3a">
-        <div style="font-size:13px;color:#888;margin-bottom:8px">⭐ Your saved stocks (${myStocks.length}):</div>
+        <div style="font-size:13px;color:#888;margin-bottom:8px">â­ Your saved stocks (${myStocks.length}):</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
           ${myStocks.slice(0,10).map(s => `<button onclick="document.getElementById('symbol').value='${s}';analyzeStock();" style="background:#15171f;border:1px solid #333;border-radius:4px;padding:4px 10px;font-size:12px;color:#ccc;cursor:pointer">${s}</button>`).join('')}
         </div>
@@ -1432,7 +1433,7 @@ function renderScanResults(results, market, progress = '') {
 
   document.getElementById('mainContent').innerHTML = `
     <div class="card">
-      <div class="card-title">🔍 Market Scanner — ${market === 'HK' ? '🇭🇰 Hong Kong' : '🇺🇸 United States'} ${progress ? `<span style="font-size:12px;color:#888;font-weight:400">(${progress})</span>` : `<span style="font-size:12px;color:#888;font-weight:400">(${filtered.length}/${total} stocks)</span>`}</div>
+      <div class="card-title">ðŸ” Market Scanner â€” ${market === 'HK' ? 'ðŸ‡­ðŸ‡° Hong Kong' : 'ðŸ‡ºðŸ‡¸ United States'} ${progress ? `<span style="font-size:12px;color:#888;font-weight:400">(${progress})</span>` : `<span style="font-size:12px;color:#888;font-weight:400">(${filtered.length}/${total} stocks)</span>`}</div>
       ${progress ? `<div class="progress-bar"><div class="progress-bar-fill" style="width:${(results.length / (market === 'HK' ? HK_WATCHLIST.length : US_WATCHLIST.length) * 100)}%"></div></div>` : ''}
       <div class="scan-header">
         <div class="scan-sort">
@@ -1449,16 +1450,16 @@ function renderScanResults(results, market, progress = '') {
             <option value="buy" ${currentFilter === 'buy' ? 'selected' : ''}>Buy</option>
             <option value="sell" ${currentFilter === 'sell' ? 'selected' : ''}>Sell</option>
             <option value="neutral" ${currentFilter === 'neutral' ? 'selected' : ''}>Neutral</option>
-            <option value="saved" ${currentFilter === 'saved' ? 'selected' : ''}>⭐ Saved</option>
+            <option value="saved" ${currentFilter === 'saved' ? 'selected' : ''}>â­ Saved</option>
           </select>
         </div>
       </div>
-      ${filtered.length === 0 ? `<div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-text">No stocks match the filter.</div></div>` : `
+      ${filtered.length === 0 ? `<div class="empty-state"><div class="empty-state-icon">ðŸ”</div><div class="empty-state-text">No stocks match the filter.</div></div>` : `
       <div class="scan-results">
         <div class="scan-row header"><div>Symbol</div><div>Price</div><div>Change</div><div>Rating</div><div>Signals</div></div>
         ${filtered.map(r => `
           <div class="scan-row" onclick="document.getElementById('symbol').value='${r.symbol}';analyzeStock();">
-            <div><div style="font-weight:600;color:#fff">${r.symbol} ${isInMyStocks(r.symbol)?'⭐':''}</div><div style="font-size:11px;color:#666">${r.cnName || r.name||''}</div></div>
+            <div><div style="font-weight:600;color:#fff">${r.symbol} ${isInMyStocks(r.symbol)?'â­':''}</div><div style="font-size:11px;color:#666">${r.cnName || r.name||''}</div></div>
             <div style="font-weight:600">${r.price.toFixed(2)}</div>
             <div class="${r.change>=0?'up':'down'}">${r.change>=0?'+':''}${r.change.toFixed(2)}%</div>
             <div><span class="${r.ratingClass}">${r.rating}</span></div>
@@ -1478,16 +1479,16 @@ async function testConnectivity() {
     { name: 'Finnhub API', url: 'https://finnhub.io/api/v1/quote?symbol=AAPL&token=d75u2o1r01qm4b7s7bi0d75u2o1r01qm4b7s7big' }
   ];
   const main = document.getElementById('mainContent');
-  let html = '<div class="card"><div class="card-title">📡 Connectivity Test</div><div class="scan-results">';
+  let html = '<div class="card"><div class="card-title">ðŸ“¡ Connectivity Test</div><div class="scan-results">';
   for (const t of tests) {
     try {
       const start = Date.now();
       const r = await fetch(t.url, { signal: AbortSignal.timeout(10000) });
       const elapsed = Date.now() - start;
       const data = await r.text();
-      html += '<div class="scan-row" style="grid-template-columns:1fr 1fr"><div>' + t.name + '</div><div style="color:#4ade80">✅ OK (' + elapsed + 'ms, ' + data.length + ' bytes)</div></div>';
+      html += '<div class="scan-row" style="grid-template-columns:1fr 1fr"><div>' + t.name + '</div><div style="color:#4ade80">âœ… OK (' + elapsed + 'ms, ' + data.length + ' bytes)</div></div>';
     } catch(e) {
-      html += '<div class="scan-row" style="grid-template-columns:1fr 1fr"><div>' + t.name + '</div><div style="color:#f87171">❌ ' + e.message + '</div></div>';
+      html += '<div class="scan-row" style="grid-template-columns:1fr 1fr"><div>' + t.name + '</div><div style="color:#f87171">âŒ ' + e.message + '</div></div>';
     }
   }
   html += '</div><div style="margin-top:12px;font-size:12px;color:#888">Run this on mobile data to see which endpoint fails.</div></div>';
@@ -1562,11 +1563,11 @@ async function showMyStocks() {
   const main = document.getElementById('mainContent');
 
   if (myStocks.length === 0) {
-    main.innerHTML = `<div class="card"><div class="card-title">⭐ My Stocks</div><div class="empty-state"><div class="empty-state-icon">⭐</div><div class="empty-state-text">No saved stocks yet.<br>Click ☆ Save when viewing a stock.</div></div></div>`;
+    main.innerHTML = `<div class="card"><div class="card-title">â­ My Stocks</div><div class="empty-state"><div class="empty-state-icon">â­</div><div class="empty-state-text">No saved stocks yet.<br>Click â˜† Save when viewing a stock.</div></div></div>`;
     return;
   }
 
-  main.innerHTML = `<div class="card"><div class="card-title">⭐ My Stocks (${myStocks.length})</div><div id="myStocksContent"><div class="loading"><div class="spinner"></div><span>Loading...</span></div></div></div>`;
+  main.innerHTML = `<div class="card"><div class="card-title">â­ My Stocks (${myStocks.length})</div><div id="myStocksContent"><div class="loading"><div class="spinner"></div><span>Loading...</span></div></div></div>`;
 
   const results = [];
   for (let i = 0; i < myStocks.length; i++) {
@@ -1593,7 +1594,7 @@ async function showMyStocks() {
   }
 
   document.getElementById('myStocksContent').innerHTML = results.length === 0 ? `
-    <div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">Could not load saved stocks.</div></div>` : `
+    <div class="empty-state"><div class="empty-state-icon">âš ï¸</div><div class="empty-state-text">Could not load saved stocks.</div></div>` : `
     <div class="scan-results">
       <div class="scan-row header"><div>Symbol</div><div>Price</div><div>Change</div><div>Rating</div><div>Actions</div></div>
       ${results.map(r => `
@@ -1604,7 +1605,7 @@ async function showMyStocks() {
           <div><span class="${r.ratingClass}">${r.rating}</span></div>
           <div>
             <button onclick="document.getElementById('symbol').value='${r.symbol}';analyzeStock();" style="background:#252836;border:1px solid #333;color:#6c9bff;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;margin-right:4px">View</button>
-            <button onclick="removeFromMyStocks('${r.symbol}');showMyStocks();" style="background:transparent;border:1px solid #f87171;color:#f87171;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:12px">✕</button>
+            <button onclick="removeFromMyStocks('${r.symbol}');showMyStocks();" style="background:transparent;border:1px solid #f87171;color:#f87171;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:12px">âœ•</button>
           </div>
         </div>
       `).join('')}
@@ -1616,13 +1617,13 @@ async function showScreener() {
   const main = document.getElementById('mainContent');
   main.innerHTML = `
     <div class="card">
-      <div class="card-title">🎯 Smart Stock Screener</div>
+      <div class="card-title">ðŸŽ¯ Smart Stock Screener</div>
       <div class="screener-panel">
         <div class="screener-row">
           <span class="screener-label">Market:</span>
           <select id="screenerMarket" class="screener-select">
-            <option value="US">🇺🇸 US Market</option>
-            <option value="HK">🇭🇰 HK Market</option>
+            <option value="US">ðŸ‡ºðŸ‡¸ US Market</option>
+            <option value="HK">ðŸ‡­ðŸ‡° HK Market</option>
           </select>
         </div>
         <div class="screener-row">
@@ -1673,8 +1674,8 @@ async function showScreener() {
           <input type="number" id="screenerMinVol" class="screener-input" value="0">
         </div>
         <div class="screener-row">
-          <button onclick="runScreener()" style="background:#6c9bff;border:none;border-radius:6px;padding:8px 20px;font-size:13px;color:#fff;cursor:pointer;font-weight:600">🔍 Run Screener</button>
-          <span style="font-size:11px;color:#666;margin-left:12px">Finnhub API • Scans up to 200 stocks</span>
+          <button onclick="runScreener()" style="background:#6c9bff;border:none;border-radius:6px;padding:8px 20px;font-size:13px;color:#fff;cursor:pointer;font-weight:600">ðŸ” Run Screener</button>
+          <span style="font-size:11px;color:#666;margin-left:12px">Finnhub API â€¢ Scans up to 200 stocks</span>
         </div>
       </div>
       <div id="screenerResults"></div>
@@ -1770,7 +1771,7 @@ async function runScreener() {
       results.push(...batchResults.filter(Boolean));
 
       resultsDiv.innerHTML = `
-        <div style="color:#888;font-size:12px;margin-bottom:8px">Scanned ${Math.min(i+batchSize,toProcess.length)}/${toProcess.length} • Found ${results.length}</div>
+        <div style="color:#888;font-size:12px;margin-bottom:8px">Scanned ${Math.min(i+batchSize,toProcess.length)}/${toProcess.length} â€¢ Found ${results.length}</div>
         <div class="progress-bar"><div class="progress-bar-fill" style="width:${((i+batchSize)/toProcess.length*100)}%"></div></div>
         ${results.length > 0 ? renderScreenerTable(results) : ''}
       `;
@@ -1779,8 +1780,8 @@ async function runScreener() {
     }
 
     resultsDiv.innerHTML = results.length === 0 ? `
-      <div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-text">No stocks match your criteria.</div></div>` : `
-      <div style="color:#4ade80;font-size:13px;margin-bottom:12px">✓ Found ${results.length} stocks</div>
+      <div class="empty-state"><div class="empty-state-icon">ðŸ”</div><div class="empty-state-text">No stocks match your criteria.</div></div>` : `
+      <div style="color:#4ade80;font-size:13px;margin-bottom:12px">âœ“ Found ${results.length} stocks</div>
       ${renderScreenerTable(results)}`;
   } catch (e) {
     resultsDiv.innerHTML = `<div class="error">Error: ${e.message}</div>`;
@@ -1863,12 +1864,12 @@ async function loadIndustryComparison(symbol, industry) {
     peerData.sort((a, b) => b.net - a.net);
     container.innerHTML = `
       <div class="card" style="margin-bottom:16px">
-        <div class="card-title">📊 Industry Comparison: ${industry}</div>
+        <div class="card-title">ðŸ“Š Industry Comparison: ${industry}</div>
         <div class="scan-results">
           <div class="scan-row header"><div>Symbol</div><div>Price</div><div>Change</div><div>Rating</div><div>Score</div></div>
           ${peerData.map(p => `
             <div class="scan-row" ${p.symbol === symbol ? 'style="background:#1a2536;border-left:3px solid #6c9bff"' : ''} onclick="document.getElementById('symbol').value='${p.symbol}';analyzeStock();">
-              <div><div style="font-weight:600;color:#fff">${p.symbol}${p.symbol === symbol ? ' ◀' : ''}</div></div>
+              <div><div style="font-weight:600;color:#fff">${p.symbol}${p.symbol === symbol ? ' â—€' : ''}</div></div>
               <div style="font-weight:600">${p.price.toFixed(2)}</div>
               <div class="${p.change >= 0 ? 'up' : 'down'}">${p.change >= 0 ? '+' : ''}${p.change.toFixed(2)}%</div>
               <div><span class="${p.ratingClass}">${p.rating}</span></div>
