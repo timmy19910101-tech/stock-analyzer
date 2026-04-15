@@ -1635,6 +1635,21 @@ async function showMyStocks() {
         trendDir = recent >= prev5 ? 1 : -1;
       }
 
+      // Backfill addedPrice for migrated stocks (set to today's price as baseline)
+      if (!addedPrice || addedPrice === 0) {
+        addedPrice = c;
+        addedDate = new Date().toISOString().slice(0,10);
+        var stocks = getMyStocks();
+        for (var j = 0; j < stocks.length; j++) {
+          var s = typeof stocks[j] === 'object' ? stocks[j].symbol : stocks[j];
+          if (s === sym) {
+            stocks[j] = {symbol: sym, addedPrice: c, addedDate: addedDate};
+            break;
+          }
+        }
+        saveMyStocks(stocks);
+      }
+
       // Since-added change
       var sinceChange = 0;
       var sinceDollar = 0;
