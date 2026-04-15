@@ -1397,7 +1397,7 @@ async function analyzeStock() {
 
     // Build quote info from Finnhub
     const c = chartData.data[chartData.data.length-1].close;
-    const prevClose = finnQuote?.pc || c;
+    const prevClose = finnQuote?.pc || (chartData.data.length > 1 ? chartData.data[chartData.data.length-2].close : c);
     const changePercent = finnQuote?.dp || ((c - prevClose) / prevClose * 100);
     const marketCap = finnProfile?.marketCapitalization ? finnProfile.marketCapitalization * 1e6 : null;
 
@@ -1623,7 +1623,8 @@ async function showMyStocks() {
       var composite = computeCompositeScore(signals);
       var c = chartData.data[chartData.data.length-1].close;
       var name = (finnProfile && finnProfile.name) ? finnProfile.name : sym;
-      var dp = (finnQuote && finnQuote.dp) ? finnQuote.dp : 0;
+      var prevBar = chartData.data.length > 1 ? chartData.data[chartData.data.length-2].close : c;
+      var dp = (finnQuote && finnQuote.dp) ? finnQuote.dp : ((c - prevBar) / prevBar * 100);
 
       // Trend: compare last close vs close 5 bars ago
       var trendDir = 0;
