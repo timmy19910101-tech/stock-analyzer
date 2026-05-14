@@ -132,7 +132,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div class="autocomplete-list" id="autocompleteList"></div>
     </div>
     <button id="analyzeBtn" onclick="analyzeStock()">Analyze</button>
-    <button id="scanBtn" class="scan-btn" onclick="scanMarket()">🔍 Scan</button>
+    <button id="scanBtn" class="scan-btn" onclick="scanMarket()">🔍 Scan All</button>
+    <button id="scanTopBtn" class="scan-btn" onclick="scanMarket(100)" style="background:#22c55e!important">⚡ Top 100</button>
     <button id="screenerBtn" onclick="showScreener()" style="background:#a78bfa">🎯 Screener</button>
     <button id="myStocksBtn" onclick="testConnectivity()" style="background:#6366f1">📡 Test Connection</button> <button onclick="showMyStocks()">⭐ My Stocks</button>
   </div>
@@ -205,10 +206,109 @@ const INDICATORS = [
   {name:'ATR',weight:0.5},{name:'VWAP',weight:1},{name:'MFI',weight:1.5}
 ];
 
-const HK_WATCHLIST = ['0700.HK','9988.HK','1299.HK','0005.HK','0388.HK','0001.HK','0002.HK','0003.HK','0016.HK','0011.HK','0012.HK','0017.HK','0027.HK','0066.HK','0101.HK','0175.HK','0241.HK','0267.HK','0288.HK','0386.HK','0669.HK','0688.HK','0762.HK','0823.HK','0883.HK','0939.HK','0941.HK','0960.HK','0968.HK','1038.HK','1044.HK','1088.HK','1109.HK','1113.HK','1177.HK','1211.HK','1288.HK','1398.HK','1810.HK','1876.HK','1928.HK','1997.HK','2007.HK','2018.HK','2020.HK','2269.HK','2313.HK','2318.HK','2382.HK','2388.HK','2628.HK','2688.HK','2899.HK','3988.HK','6862.HK','9618.HK','9633.HK','9999.HK','0981.HK','1093.HK','2331.HK','3690.HK','6618.HK','6690.HK','9626.HK','9888.HK','9961.HK','2208.HK','1766.HK','1919.HK','1801.HK','3320.HK','1171.HK','0268.HK','0384.HK','0171.HK','0988.HK','0151.HK','0969.HK','8191.HK','2038.HK','6060.HK','6160.HK','6981.HK','0979.HK','0989.HK','0023.HK','0083.HK','0425.HK','0606.HK','0661.HK','0709.HK','0772.HK','0460.HK'];
-const US_WATCHLIST = ['AAPL','MSFT','GOOGL','AMZN','NVDA','META','TSLA','BRK-B','JPM','V','JNJ','WMT','PG','MA','HD','UNH','DIS','PYPL','INTC','NFLX','AMD','CRM','COST','TMO','ABT','MRK','PFE','T','VZ','KO','PEP','BA','GS','MS','C','WFC','AXP','BLK','SCHW','SPGI','ICE','CME','CB','NDAQ','ABBV','BMY','LLY','MRNA','GILD','AMGN','VRTX','REGN','ISRG','SYK','DXCM','BSX','ZTS','CVS','CI','HUM','CVS','MCK','GOOG','ADBE','ORCL','CRM','NOW','INTU','SNPS','CDNS','PANW','FTNT','MNST','ANET','EQIX','PLTR','SNOW','NET','DDOG','CRWD','ZS','ABNB','SQ','COIN','SHOP','SE','MELI','NKE','DECK','TGT','LOW','TJX','ROST','DLTR','BKNG','MAR','HLT','XOM','CVX','COP','SLB','EOG','OXY','VLO','MPC','PSX','WMB','CAT','DE','UNP','HON','GE','LMT','RTX','NOC','EMR','ETN','PCAR','FDX','UPS','CSX','NSC','DAL','UAL','AAL','LUV','CARR','OTIS','NUE','SHW','LIN','APD','ECL','FCX','NEE','DUK','SO','D','AEP','SRE','XEL'];
+const HK_WATCHLIST = [
+'0700.HK','9988.HK','1299.HK','0005.HK','0388.HK','0001.HK','0002.HK','0003.HK','0016.HK','0011.HK',
+'0012.HK','0017.HK','0027.HK','0066.HK','0101.HK','0175.HK','0241.HK','0267.HK','0288.HK','0386.HK',
+'0669.HK','0688.HK','0762.HK','0823.HK','0883.HK','0939.HK','0941.HK','0960.HK','0968.HK','1038.HK',
+'1044.HK','1088.HK','1109.HK','1113.HK','1177.HK','1211.HK','1288.HK','1398.HK','1810.HK','1876.HK',
+'1928.HK','1997.HK','2007.HK','2018.HK','2020.HK','2269.HK','2313.HK','2318.HK','2382.HK','2388.HK',
+'2628.HK','2688.HK','2899.HK','3988.HK','6862.HK','9618.HK','9633.HK','9999.HK','0981.HK','1093.HK',
+'2331.HK','3690.HK','6618.HK','6690.HK','9626.HK','9888.HK','9961.HK','2208.HK','1766.HK','1919.HK',
+'1801.HK','3320.HK','1171.HK','0268.HK','0384.HK','0171.HK','0988.HK','0151.HK','0969.HK','8191.HK',
+'2038.HK','6060.HK','6160.HK','6981.HK','0979.HK','0989.HK','0023.HK','0083.HK','0425.HK','0606.HK',
+'0661.HK','0709.HK','0772.HK','0460.HK','0006.HK','0014.HK','0019.HK','0020.HK','0024.HK','0025.HK',
+'0028.HK','0030.HK','0035.HK','0045.HK','0049.HK','0052.HK','0054.HK','0055.HK','0057.HK','0058.HK',
+'0059.HK','0063.HK','0069.HK','0072.HK','0078.HK','0081.HK','0084.HK','0087.HK','0088.HK','0091.HK',
+'0092.HK','0095.HK','0097.HK','0098.HK','0102.HK','0107.HK','0111.HK','0114.HK','0119.HK','0122.HK',
+'0124.HK','0125.HK','0135.HK','0142.HK','0144.HK','0148.HK','0157.HK','0165.HK','0166.HK','0168.HK',
+'0177.HK','0183.HK','0189.HK','0190.HK','0192.HK','0197.HK','0200.HK','0203.HK','0214.HK','0216.HK',
+'0220.HK','0222.HK','0226.HK','0228.HK','0233.HK','0238.HK','0242.HK','0248.HK','0250.HK','0257.HK',
+'0258.HK','0260.HK','0263.HK','0272.HK','0277.HK','0282.HK','0285.HK','0286.HK','0290.HK','0291.HK',
+'0293.HK','0297.HK','0302.HK','0308.HK','0315.HK','0316.HK','0317.HK','0322.HK','0325.HK','0330.HK',
+'0333.HK','0336.HK','0340.HK','0341.HK','0345.HK','0347.HK','0349.HK','0350.HK','0354.HK','0356.HK',
+'0358.HK','0362.HK','0363.HK','0365.HK','0369.HK','0371.HK','0373.HK','0375.HK','0376.HK','0377.HK',
+'0380.HK','0390.HK','0392.HK','0393.HK','0395.HK','0396.HK','0397.HK','0399.HK','0400.HK','0405.HK',
+'0410.HK','0412.HK','0416.HK','0417.HK','0422.HK','0426.HK','0432.HK','0433.HK','0436.HK','0440.HK',
+'0442.HK','0448.HK','0451.HK','0453.HK','0455.HK','0457.HK','0458.HK','0464.HK','0468.HK','0473.HK',
+'0475.HK','0477.HK','0484.HK','0485.HK','0489.HK','0490.HK','0493.HK','0494.HK','0497.HK','0498.HK',
+'0500.HK','0506.HK','0508.HK','0520.HK','0522.HK','0524.HK','0526.HK','0528.HK','0530.HK','0533.HK',
+'0535.HK','0538.HK','0543.HK','0548.HK','0553.HK','0558.HK','0560.HK','0562.HK','0564.HK','0568.HK',
+'0570.HK','0571.HK','0573.HK','0575.HK','0576.HK','0577.HK','0578.HK','0580.HK','0582.HK','0585.HK',
+'0586.HK','0588.HK','0589.HK','0590.HK','0592.HK','0593.HK','0595.HK','0596.HK','0598.HK','0603.HK',
+'0608.HK','0610.HK','0613.HK','0617.HK','0621.HK','0623.HK','0625.HK','0627.HK','0628.HK','0632.HK',
+'0635.HK','0636.HK','0639.HK','0641.HK','0643.HK','0644.HK','0646.HK','0647.HK','0649.HK','0651.HK',
+'0652.HK','0653.HK','0655.HK','0656.HK','0657.HK','0658.HK','0659.HK','0660.HK','0663.HK','0664.HK',
+'0665.HK','0666.HK','0667.HK','0670.HK','0672.HK','0673.HK','0675.HK','0676.HK','0678.HK','0680.HK',
+'0681.HK','0682.HK','0683.HK'
+];
+const US_WATCHLIST = [
+'AAPL','MSFT','GOOGL','GOOG','AMZN','NVDA','META','TSLA','AVGO','ORCL',
+'ADBE','CRM','INTC','AMD','QCOM','TXN','IBM','NOW','INTU','PYPL',
+'SNPS','CDNS','PANW','FTNT','MNST','ANET','PLTR','SNOW','NET','DDOG',
+'CRWD','ZS','ABNB','SQ','COIN','SHOP','SE','MELI','UBER','ROKU',
+'TWLO','ZI','PATH','DAY','MDB','TTD','VEEV','DOCU','S','BILL',
+'HUBS','DT','FSLR','GDDY','OKTA','ESTC','PCTY','TYL','MANH','KEYS',
+'ADI','AMAT','KLAC','LRCX','MRVL','MU','MCHP','NXPI','ON','SWKS',
+'ARM','WDC','STX','MPWR','ENTG','COHR','LITE','AEHR','IGIC','UNH',
+'JNJ','PFE','ABBV','MRK','LLY','BMY','AMGN','GILD','VRTX','MRNA',
+'REGN','ISRG','SYK','DXCM','BSX','ZTS','TMO','ABT','CVS','CI',
+'HUM','MCK','ELV','CNC','HCA','UHS','EVH','BIIB','SGEN','ALNY',
+'VTRS','HCN','RAD','RPRX','AZN','SNY','NVS','IDXX','TECH','DGX',
+'LH','IQV','WST','BRKR','TNDM','PODD','ICLR','RGEN','NKTR','EXEL',
+'IMCR','PTCT','BMRN','IONS','ARWR','VKTX','RXRX','BRK-B','JPM','V',
+'MA','BAC','WFC','GS','MS','C','AXP','BLK','SCHW','SPGI',
+'ICE','CME','CB','NDAQ','PGR','ALL','TRV','MET','PRU','AIG',
+'AFL','USB','PNC','TFC','COF','BK','STT','FITB','HBAN','RF',
+'KEY','CFG','SIVB','MTB','ZION','WBS','SNV','CMA','FHN','BOKF',
+'UMBF','VLY','WAL','PFG','LNC','VOYA','AIZ','AJG','BRO','WRB',
+'ACGL','RE','EG','RJF','AMG','AMP','BEN','LM','IVZ','TROW',
+'EFX','EXPN','CINF','THG','MKL','FFG','KNSL','NKE','DECK','TGT',
+'LOW','TJX','ROST','DLTR','BKNG','MAR','HLT','MCD','SBUX','CMG',
+'YUM','DPZ','WING','CHDN','RCL','CCL','NCLH','H','WH','PK',
+'APLE','WYND','RIDE','F','GM','TM','STLA','RIVN','LCID','CZR',
+'LVS','WYNN','W','RH','ETSY','CHWY','BURL','AEO','ANF','GES',
+'JWN','KSS','WMT','PG','KO','PEP','COST','CL','EL','CLX',
+'KMB','KHC','GIS','HSY','MDLZ','STZ','SJM','CAG','BG','ADM',
+'CHD','COLM','XOM','CVX','COP','SLB','EOG','OXY','VLO','MPC',
+'PSX','WMB','OKE','KMI','EPD','ET','ENB','TRGP','FANG','DVN',
+'MRO','HES','HAL','BKR','NOV','FTI','PKD','NBR','PTEN','CHX',
+'WFRD','NEE','DUK','SO','D','AEP','SRE','XEL','EXC','PEG',
+'WEC','ED','ES','EIX','ETR','FE','DTE','AEE','CMS','ATO',
+'LNT','NI','PNW','EVRG','OGE','AGR','IDA','BKH','POR','CAT',
+'DE','UNP','HON','GE','LMT','RTX','NOC','EMR','ETN','PCAR',
+'FDX','UPS','CSX','NSC','DAL','UAL','AAL','LUV','ALK','CARR',
+'OTIS','GEV','GEHC','MMM','ITW','PH','ROK','LII','XYL','DHR',
+'RSG','WM','GWW','FAST','MLM','SHW','LIN','APD','ECL','FCX',
+'NUE','STLD','CLF','AA','CENX','SLGN','BALL','CE','EMN','DD',
+'DOW','LYB','WLK','SEESH','FMC','CF','MOS','NTR','ICL','AMT',
+'PLD','CCI','EQIX','DLR','SPG','O','PSA','CSGP','WELL','VICI',
+'AVB','EQR','ESS','UDR','MAA','CPT','INVH','ARE','OHI','VTR',
+'HCP','LTC','SBRA','DOC','PEAK','BXP','SLG','VNO','BAM','DIS',
+'NFLX','CMCSA','T','VZ','TMUS','CHTR','WBD','PARA','EA','TTWO',
+'ATVI','LYV','OMC','IPG','NWSA','FOXA'
+];
 
-const HK_NAMES_CN = {'0700.HK':'腾讯控股','9988.HK':'阿里巴巴','1299.HK':'友邦保险','0005.HK':'汇丰控股','0388.HK':'港交所','0001.HK':'长和','0002.HK':'中电控股','0003.HK':'香港中华煤气','0016.HK':'新鸿基地产','0011.HK':'恒生银行','0012.HK':'恒基发展','0017.HK':'新世界发展','0027.HK':'银河娱乐','0066.HK':'港铁公司','0101.HK':'恒隆地产','0175.HK':'吉利汽车','0241.HK':'阿里健康','0267.HK':'中信股份','0288.HK':'万洲国际','0386.HK':'中国石化','0669.HK':'创科实业','0688.HK':'中国海外发展','0762.HK':'中国联通','0823.HK':'领展房产','0883.HK':'中海油','0939.HK':'建设银行','0941.HK':'中国移动','0960.HK':'龙光集团','0968.HK':'信义光能','1038.HK':'长江基建','1044.HK':'恒安国际','1088.HK':'中国神华','1109.HK':'华润置地','1113.HK':'长实集团','1177.HK':'中国生物制药','1211.HK':'比亚迪','1288.HK':'农业银行','1398.HK':'工商银行','1810.HK':'小米集团','1876.HK':'百威亚太','1928.HK':'金沙中国','1997.HK':'九龙仓置业','2007.HK':'碧桂园','2018.HK':'瑞声科技','2020.HK':'安踏体育','2269.HK':'药明生物','2313.HK':'申洲国际','2318.HK':'中国平安','2382.HK':'舜宇光学','2388.HK':'中银香港','2628.HK':'中国人寿','2688.HK':'新奥能源','2899.HK':'紫金矿业','3988.HK':'中国银行','6862.HK':'海底捞','9618.HK':'京东集团','9633.HK':'农夫山泉','9999.HK':'网易','0981.HK':'中芯国际','1093.HK':'石药集团','2331.HK':'李宁','3690.HK':'美团','6618.HK':'京东健康','6690.HK':'海尔智家','9626.HK':'哔哩哔哩','9888.HK':'百度集团','9961.HK':'携程集团','2208.HK':'金龙鱼','1766.HK':'中国中车','1919.HK':'中远海控','1801.HK':'中国交通建设','3320.HK':'中国太保','1171.HK':'兖矿能源','0268.HK':'金蝶国际','0384.HK':'中国燃气','0171.HK':'银娱','0988.HK':'中国银行','0151.HK':'中国旺旺','0969.HK':'信义玻璃','8191.HK':'天齐锂业','2038.HK':'富士康','6060.HK':'众安在线','6160.HK':'百济神州','6981.HK':'宇华教育','0023.HK':'东亚银行','0083.HK':'信和置业','0425.HK':'敏华控股','0606.HK':'嘉里物流','0661.HK':'时代电气','0709.HK':'华住集团','0772.HK':'阅文集团','0979.HK':'格林酒店','0989.HK':'润地'};
+const HK_NAMES_CN = {
+'0700.HK':'\u817E\u8BAF\u63A7\u80A1','9988.HK':'\u963F\u91CC\u5DF4\u5DF4','1299.HK':'\u53CB\u90A6\u4FDD\u9669','0005.HK':'\u6C47\u4E30\u63A7\u80A1','0388.HK':'\u6E2F\u4EA4\u6240',
+'0001.HK':'\u957F\u548C','0002.HK':'\u4E2D\u7535\u63A7\u80A1','0003.HK':'\u9999\u6E2F\u4E2D\u534E\u7164\u6C14','0016.HK':'\u65B0\u9E3F\u57FA\u5730\u4EA7','0011.HK':'\u6052\u751F\u94F6\u884C',
+'0012.HK':'\u6052\u57FA\u53D1\u5C55','0017.HK':'\u65B0\u4E16\u754C\u53D1\u5C55','0027.HK':'\u94F6\u6CB3\u5A31\u4E50','0066.HK':'\u6E2F\u94C1\u516C\u53F8','0101.HK':'\u6052\u9686\u5730\u4EA7',
+'0175.HK':'\u5409\u5229\u6C7D\u8F66','0241.HK':'\u963F\u91CC\u5065\u5EB7','0267.HK':'\u4E2D\u4FE1\u80A1\u4EFD','0288.HK':'\u4E07\u6D32\u56FD\u9645','0386.HK':'\u4E2D\u56FD\u77F3\u5316',
+'0669.HK':'\u521B\u79D1\u5B9E\u4E1A','0688.HK':'\u4E2D\u56FD\u6D77\u5916\u53D1\u5C55','0762.HK':'\u4E2D\u56FD\u8054\u901A','0823.HK':'\u9886\u5C55\u623F\u4EA7','0883.HK':'\u4E2D\u6D77\u6CB9',
+'0939.HK':'\u5EFA\u8BBE\u94F6\u884C','0941.HK':'\u4E2D\u56FD\u79FB\u52A8','0960.HK':'\u9F99\u5149\u96C6\u56E2','0968.HK':'\u4FE1\u4E49\u5149\u80FD','1038.HK':'\u957F\u6C5F\u57FA\u5EFA',
+'1044.HK':'\u6052\u5B89\u56FD\u9645','1088.HK':'\u4E2D\u56FD\u795E\u534E','1109.HK':'\u534E\u6DA6\u7F6E\u5730','1113.HK':'\u957F\u5B9E\u96C6\u56E2','1177.HK':'\u4E2D\u56FD\u751F\u7269\u533B\u836F',
+'1211.HK':'\u6BD4\u4E9A\u8FEA','1288.HK':'\u519C\u4E1A\u94F6\u884C','1398.HK':'\u5DE5\u5546\u94F6\u884C','1810.HK':'\u5C0F\u7C73\u96C6\u56E2','1876.HK':'\u767E\u5A01\u4E9A\u592A',
+'1928.HK':'\u91D1\u6C99\u4E2D\u56FD','1997.HK':'\u4E5D\u9F99\u4ED3\u7F6E\u4E1A','2007.HK':'\u78A7\u6842\u56ED','2018.HK':'\u745E\u58F0\u79D1\u6280','2020.HK':'\u5B89\u8E0F\u4F53\u80B2',
+'2269.HK':'\u836F\u660E\u751F\u7269','2313.HK':'\u7533\u6D32\u56FD\u9645','2318.HK':'\u4E2D\u56FD\u5E73\u5B89','2382.HK':'\u821E\u5B87\u5149\u5B66','2388.HK':'\u4E2D\u94F6\u9999\u6E2F',
+'2628.HK':'\u4E2D\u56FD\u4EBA\u5BFF','2688.HK':'\u65B0\u5965\u80FD\u6E90','2899.HK':'\u7D2B\u91D1\u77FF\u4E1A','3988.HK':'\u4E2D\u56FD\u94F6\u884C','6862.HK':'\u6D77\u5E95\u635E',
+'9618.HK':'\u4EAC\u4E1C\u96C6\u56E2','9633.HK':'\u519C\u592B\u5C71\u6CC9','9999.HK':'\u7F51\u6613','0981.HK':'\u4E2D\u82AF\u56FD\u9645','1093.HK':'\u77F3\u836F\u96C6\u56E2',
+'2331.HK':'\u674E\u5B81','3690.HK':'\u7F8E\u56E2','6618.HK':'\u4EAC\u4E1C\u5065\u5EB7','6690.HK':'\u6D77\u5C14\u667A\u5BB6','9626.HK':'\u54D4\u54E9\u54D4\u54E9',
+'9888.HK':'\u767E\u5EA6\u96C6\u56E2','9961.HK':'\u643A\u7A0B\u96C6\u56E2','2208.HK':'\u91D1\u9F99\u9C7C','1766.HK':'\u4E2D\u56FD\u4E2D\u8F66','1919.HK':'\u4E2D\u8FDC\u6D77\u63A7',
+'1801.HK':'\u4E2D\u56FD\u4EA4\u901A\u5EFA\u8BBE','3320.HK':'\u4E2D\u56FD\u592A\u4FDD','1171.HK':'\u5156\u77FF\u80FD\u6E90','0268.HK':'\u91D1\u8776\u56FD\u9645','0384.HK':'\u4E2D\u56FD\u71C3\u6C14',
+'0171.HK':'\u94F6\u5A31','0988.HK':'\u4E2D\u56FD\u94F6\u884C','0151.HK':'\u4E2D\u56FD\u65FA\u65FA','0969.HK':'\u4FE1\u4E49\u73BB\u7483','8191.HK':'\u5929\u9F50\u9502\u4E1A',
+'2038.HK':'\u5BCC\u58EB\u5EB7','6060.HK':'\u4F17\u5B89\u5728\u7EBF','6160.HK':'\u767E\u6D4E\u795E\u5DDE','6981.HK':'\u5B87\u534E\u6559\u80B2','0023.HK':'\u4E1C\u4E9A\u94F6\u884C',
+'0083.HK':'\u4FE1\u548C\u7F6E\u4E1A','0425.HK':'\u654F\u534E\u63A7\u80A1','0606.HK':'\u5609\u91CC\u7269\u6D41','0661.HK':'\u65F6\u4EE3\u7535\u6C14','0709.HK':'\u534E\u4F4F\u96C6\u56E2',
+'0772.HK':'\u9605\u6587\u96C6\u56E2','0979.HK':'\u683C\u6797\u9152\u5E97','0989.HK':'\u6DA6\u5730','0460.HK':'\u56DB\u5B63\u9F99',
+};
 
 // ===== INDICATOR MODAL =====
 function showIndicatorInfo(name) {
@@ -1028,7 +1128,7 @@ let currentFilter = 'all';
 
 function setLoading(loading) {
   isLoading = loading;
-  const btns = ['analyzeBtn','scanBtn','myStocksBtn','screenerBtn'];
+  const btns = ['analyzeBtn','scanBtn','scanTopBtn','myStocksBtn','screenerBtn'];
   btns.forEach(id => { const b = document.getElementById(id); if (b) b.disabled = loading; });
 }
 
@@ -1527,20 +1627,28 @@ async function testConnectivity() {
   main.innerHTML = html;
 }
 
-async function scanMarket() {
+async function scanMarket(scanLimit) {
   const market = document.getElementById('market').value;
   saveLastMarket(market);
-  const watchlist = market === 'HK' ? HK_WATCHLIST : US_WATCHLIST;
+  let watchlist = market === 'HK' ? HK_WATCHLIST : US_WATCHLIST;
   if (isLoading) return;
+
+  // Top 100 quick option
+  if (scanLimit) watchlist = watchlist.slice(0, scanLimit);
 
   setLoading(true);
   currentSort = 'net'; currentFilter = 'all';
   lastScanResults = []; lastScanMarket = market;
 
   const results = [];
-  const batchSize = 3;
+  const batchSize = 5;
+  const batchDelay = 200;
+  const scanStart = Date.now();
+  const total = watchlist.length;
+  let scanned = 0;
+  let strongBuyCount = 0;
 
-  for (let i = 0; i < watchlist.length; i += batchSize) {
+  for (let i = 0; i < total; i += batchSize) {
     const batch = watchlist.slice(i, i + batchSize);
     const promises = batch.map(async (sym) => {
       try {
@@ -1551,7 +1659,6 @@ async function scanMarket() {
         const c = chartData.data[chartData.data.length-1].close;
         const prevBar = chartData.data.length > 1 ? chartData.data[chartData.data.length-2].close : c;
 
-        // Try Finnhub for better price/change (works for US, may fail for HK on free tier)
         let name = sym, price = c, change = ((c - prevBar) / prevBar * 100);
         try {
           const [finnQuote, finnProfile] = await Promise.all([finnhubQuote(sym), finnhubProfile(sym)]);
@@ -1575,13 +1682,24 @@ async function scanMarket() {
     });
 
     const batchResults = await Promise.all(promises);
-    results.push(...batchResults.filter(Boolean));
+    scanned += batch.length;
+    const validResults = batchResults.filter(Boolean);
+    results.push(...validResults);
+    strongBuyCount = results.filter(r => r.rating === 'Strong Buy').length;
     lastScanResults = [...results];
 
-    renderScanResults(results, market, `${Math.min(i + batchSize, watchlist.length)}/${watchlist.length}`);
+    // Calculate ETA
+    const elapsed = Date.now() - scanStart;
+    const avgPerStock = elapsed / scanned;
+    const remaining = Math.round((total - scanned) * avgPerStock / 1000);
+    const etaStr = remaining > 0 ? ' ~' + remaining + 's left' : '';
+    const progress = `Scanning ${scanned}/${total}${etaStr} \u2022 Found ${strongBuyCount} Strong Buy`;
 
-    // Delay between batches to respect rate limits
-    await new Promise(r => setTimeout(r, 300));
+    renderScanResults(results, market, progress);
+
+    if (i + batchSize < total) {
+      await new Promise(r => setTimeout(r, batchDelay));
+    }
   }
 
   renderScanResults(results, market);
@@ -1874,7 +1992,7 @@ async function runScreener() {
     const maxStocks = 200;
     const toProcess = stockList.slice(0, maxStocks);
     const results = [];
-    const batchSize = 3;
+    const batchSize = 5;
 
     for (let i = 0; i < toProcess.length; i += batchSize) {
       const batch = toProcess.slice(i, i + batchSize);
@@ -1944,12 +2062,12 @@ async function runScreener() {
       results.push(...batchResults.filter(Boolean));
 
       resultsDiv.innerHTML = `
-        <div style="color:#888;font-size:12px;margin-bottom:8px">Scanned ${Math.min(i+batchSize,toProcess.length)}/${toProcess.length} • Found ${results.length}</div>
+        <div style="color:#888;font-size:12px;margin-bottom:8px">Scanned ${Math.min(i+batchSize,toProcess.length)}/${toProcess.length} \u2022 Found ${results.length}</div>
         <div class="progress-bar"><div class="progress-bar-fill" style="width:${((i+batchSize)/toProcess.length*100)}%"></div></div>
         ${results.length > 0 ? renderScreenerTable(results) : ''}
       `;
 
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 200));
     }
 
     resultsDiv.innerHTML = results.length === 0 ? `
