@@ -458,6 +458,7 @@ function getMyStocks() {
 }
 function saveMyStocks(stocks) {
   try { localStorage.setItem(MY_STOCKS_KEY, JSON.stringify(stocks)); } catch {}
+  if(!_skipSync) cloudSync();
 }
 function getMyStockSymbols() {
   return getMyStocks().map(s => typeof s === 'object' ? s.symbol : s);
@@ -474,6 +475,47 @@ function removeFromMyStocks(symbol) {
   saveMyStocks(getMyStocks().filter(s => (typeof s === 'object' ? s.symbol : s) !== symbol));
 }
 function isInMyStocks(symbol) { return getMyStockSymbols().includes(symbol); }
+
+// ===== CLOUD SYNC =====
+var SYNC_USER_KEY = 'stockAnalyzer_userId';
+var _skipSync = false;
+var syncInProgress = false;
+function getSyncUserId() {
+  var id = localStorage.getItem(SYNC_USER_KEY);
+  if (!id) { id = crypto.randomUUID(); localStorage.setItem(SYNC_USER_KEY, id); }
+  return id;
+}
+async function cloudSync() {
+  if (syncInProgress) return;
+  syncInProgress = true;
+  try {
+    var userId = getSyncUserId();
+    var stocks = getMyStocks();
+    await fetch('/api/sync/' + userId, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({stocks: stocks})
+    });
+  } catch(e) { console.error('Sync error:', e); }
+  syncInProgress = false;
+}
+async function cloudPull() {
+  try {
+    var userId = getSyncUserId();
+    var resp = await fetch('/api/sync/' + userId);
+    var data = await resp.json();
+    if (data.stocks && data.stocks.length > 0) {
+      var local = getMyStocks();
+      if (JSON.stringify(data.stocks) !== JSON.stringify(local)) {
+        _skipSync = true;
+        saveMyStocks(data.stocks);
+        _skipSync = false;
+      }
+      return true;
+    }
+  } catch(e) { console.error('Pull error:', e); }
+  return false;
+}
 function getMyStockMeta(symbol) {
   const stocks = getMyStocks();
   const found = stocks.find(s => (typeof s === 'object' ? s.symbol : s) === symbol);
@@ -1797,6 +1839,7 @@ async function scanMarket(scanLimit) {
 
 // ===== MY STOCKS =====
 async function showMyStocks() {
+  if(!_skipSync) { _skipSync=true; await cloudPull(); _skipSync=false; }
   var myStocks = getMyStocks();
   var main = document.getElementById('mainContent');
 
@@ -2308,6 +2351,7 @@ document.addEventListener('click', e => {
 (function() {
   const lastM = loadLastMarket();
   if (lastM) document.getElementById('market').value = lastM;
+  cloudPull();
 })();
 </script>
 </body>
