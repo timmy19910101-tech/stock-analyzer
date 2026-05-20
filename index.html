@@ -1007,10 +1007,12 @@ function analyzeIndicator(name, data) {
 
 // Compute volume confirmation data from OHLCV
 function computeVolumeConfirmation(data) {
-  if (!data || data.length < 20) return { confirmed: null, avgVolume: null, recentVolume: null };
+  if (!data || data.length < 21) return { confirmed: null, avgVolume: null, recentVolume: null };
   const volumes = data.map(d => d.volume || 0);
-  const avgVolume = volumes.slice(-20, -1).reduce((a, b) => a + b, 0) / Math.min(19, volumes.length - 1);
-  const recentVolume = volumes[volumes.length - 1];
+  // Use last COMPLETED bar (n-1) since the latest bar may be intraday/incomplete
+  const lastCompleteIdx = volumes.length - 2;
+  const avgVolume = volumes.slice(lastCompleteIdx - 19, lastCompleteIdx).reduce((a, b) => a + b, 0) / 20;
+  const recentVolume = volumes[lastCompleteIdx];
   if (avgVolume === 0) return { confirmed: null, avgVolume, recentVolume };
   const confirmed = recentVolume > avgVolume;
   return { confirmed, avgVolume, recentVolume };
