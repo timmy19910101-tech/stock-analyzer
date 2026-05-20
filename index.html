@@ -1821,6 +1821,11 @@ function renderScanResults(results, market, progress = '') {
         </div>
       </div>
       ${filtered.length === 0 ? `<div class="empty-state"><div class="empty-state-icon">\u{1F50D}</div><div class="empty-state-text">No stocks match the filter.</div></div>` : `
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px;font-size:11px;color:#888">
+        <span><span style="color:#4ade80">\u2713 Vol</span> = Volume supports signal</span>
+        <span><span style="color:#fbbf24">\u26a0 Low Vol</span> = Low volume, less reliable</span>
+        <span><span style="color:#f87171">\u26a0 Weak Fund</span> = Weak fundamentals (&lt;50/100)</span>
+      </div>
       <div class="scan-results">
         <div class="scan-row header"><div>Symbol</div><div>Price</div><div>Change</div><div>Rating</div><div>Signals</div></div>
         ${filtered.map(r => `
@@ -1828,7 +1833,7 @@ function renderScanResults(results, market, progress = '') {
             <div><div style="font-weight:600;color:#fff">${r.symbol} ${isInMyStocks(r.symbol)?'\u2b50':''}</div><div style="font-size:11px;color:#666">${r.cnName || r.name||''}</div></div>
             <div style="font-weight:600">${r.price.toFixed(2)}</div>
             <div class="${r.change>=0?'up':'down'}">${r.change>=0?'+':''}${r.change.toFixed(2)}%</div>
-            <div><span class="${r.ratingClass}">${r.rating}</span>${r.volConfirmed === true ? ' \u2713' : r.volConfirmed === false ? ' \u26a0' : ''}${r.weakFundamentals ? ' \u26a0' : ''}</div>
+            <div><span class="${r.ratingClass}">${r.rating}</span>${r.volConfirmed === true ? ' <span title="Volume supports signal (above 20-day avg)" style="color:#4ade80;cursor:help">\u2713 Vol</span>' : r.volConfirmed === false ? ' <span title="Low volume — signal less reliable" style="color:#fbbf24;cursor:help">\u26a0 Low Vol</span>' : ''}${r.weakFundamentals ? ' <span title="Weak fundamentals (score < 50/100)" style="color:#f87171;cursor:help">\u26a0 Weak Fund</span>' : ''}</div>
             <div><span style="color:#4ade80">${r.buyCount}B</span> / <span style="color:#f87171">${r.sellCount}S</span></div>
           </div>
         `).join('')}
